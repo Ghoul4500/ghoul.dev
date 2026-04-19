@@ -1,3 +1,6 @@
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { join } from 'node:path';
+
 type CacheEntry<T> = { value: T; expires: number };
 const cache = new Map<string, CacheEntry<any>>();
 const TTL = 10 * 60 * 1000;
@@ -253,6 +256,94 @@ export type GitHubStats = {
   sources: { github: boolean; gitlab: boolean };
   updated_at: string;
 };
+
+/**
+ * Persistent, stale-while-revalidate cache for the stats payload.
+ *
+ * Contract:
+ *   - If ANY cache is available (memory or disk), that cache is returned
+ *     immediately — no matter how old it is. Users never block on upstream.
+ *   - If the cache is older than STATS_TTL, a refresh is kicked off in the
+ *     background (fire-and-forget). The current caller still gets the stale
+ *     value right now; the NEXT caller after the refresh completes gets fresh.
+ *   - If NO cache exists at all (first boot, no disk file), the caller is
+ *     awaited on the fetch — one-time cost, then the cache is seeded forever.
+ *   - Concurrent refreshes are de-duped: if a fetch is already in flight,
+ *     we reuse its promise instead of fanning out N parallel GitHub storms.
+ *
+ * To force a refresh: remove STATS_CACHE_DIR/github-stats.json and restart.
+ */
+const CACHE_DIR = process.env.STATS_CACHE_DIR || join(process.cwd(), '.cache');
+const CACHE_FILE = join(CACHE_DIR, 'github-stats.json');
+const STATS_TTL = 30 * 60 * 1000; // 30 min — after this, background-refresh next request
+
+type CachedEntry = {
+  value: GitHubStats;
+  fetchedAt: number; // unix ms
+};
+
+let cached: CachedEntry | null = null;
+let fetchInFlight: Promise<GitHubStats> | null = null;
+
+async function loadDiskCache(): Promise<CachedEntry | null> {
+  try {
+    const txt = await readFile(CACHE_FILE, 'utf-8');
+    const parsed = JSON.parse(txt);
+    // Basic shape check — protect against a stale schema from a previous version.
+    if (parsed && typeof parsed.fetchedAt === 'number' && parsed.value) {
+      return parsed as CachedEntry;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function saveDiskCache(entry: CachedEntry): Promise<void> {
+  try {
+    await mkdir(CACHE_DIR, { recursive: true });
+    await writeFile(CACHE_FILE, JSON.stringify(entry));
+  } catch (e) {
+    console.error('[stats cache] failed to save:', e);
+  }
+}
+
+// Eager warm-up on module init.
+loadDiskCache().then((d) => {
+  if (d && !cached) cached = d;
+});
+
+function refreshInBackground(user: string): Promise<GitHubStats> {
+  if (fetchInFlight) return fetchInFlight;
+  fetchInFlight = (async () => {
+    try {
+      const fresh = await getGitHubStats(user);
+      cached = { value: fresh, fetchedAt: Date.now() };
+      await saveDiskCache(cached);
+      return fresh;
+    } finally {
+      fetchInFlight = null;
+    }
+  })();
+  return fetchInFlight;
+}
+
+export async function getCachedStats(user = 'Ghoul4500'): Promise<GitHubStats> {
+  // Cold start with no disk file — have to wait for one fetch so we can serve
+  // anything at all. From then on, this branch is never taken again.
+  if (!cached) return refreshInBackground(user);
+
+  // Stale but usable — serve immediately, refresh in the background. We
+  // .catch() the promise so an unhandled rejection can't crash the server;
+  // on failure the cache simply stays stale until the next attempt.
+  if (Date.now() - cached.fetchedAt > STATS_TTL) {
+    refreshInBackground(user).catch((err) => {
+      console.error('[stats cache] background refresh failed:', err?.message ?? err);
+    });
+  }
+
+  return cached.value;
+}
 
 export async function getGitHubStats(user = 'Ghoul4500'): Promise<GitHubStats> {
   const profile = await fetchJson<any>(`https://api.github.com/users/${user}`);
