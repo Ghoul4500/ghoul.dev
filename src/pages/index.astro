@@ -1,0 +1,33 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
+import Hero from '../components/Hero.astro';
+import About from '../components/About.astro';
+import Experience from '../components/Experience.astro';
+import ClientWork from '../components/ClientWork.astro';
+import Projects from '../components/Projects.astro';
+import OpenSource from '../components/OpenSource.astro';
+import Education from '../components/Education.astro';
+import Contact from '../components/Contact.astro';
+import Footer from '../components/Footer.astro';
+import Marquee from '../components/islands/Marquee.svelte';
+import { techStack } from '../lib/projects.ts';
+
+export const prerender = true;
+---
+
+<Layout>
+  <Nav />
+  <main id="main">
+    <Hero />
+    <Marquee items={techStack} client:visible />
+    <About />
+    <Experience />
+    <ClientWork />
+    <Projects />
+    <OpenSource />
+    <Education />
+    <Contact />
+  </main>
+  <Footer />
+</Layout>

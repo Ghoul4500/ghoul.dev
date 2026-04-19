@@ -1,0 +1,25 @@
+{
+  "name": "ghoul.dev",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev --port 3000",
+    "build": "astro build",
+    "preview": "astro preview --port 3000",
+    "astro": "astro",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/node": "^10.0.5",
+    "@astrojs/svelte": "^8.0.5",
+    "@tailwindcss/vite": "^4.2.2",
+    "astro": "^6.1.8",
+    "hono": "^4.12.14",
+    "svelte": "^5.55.4",
+    "tailwindcss": "^4.2.2"
+  }
+}

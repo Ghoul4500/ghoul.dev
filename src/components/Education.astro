@@ -1,0 +1,73 @@
+---
+import { education, awards } from '../lib/clients.ts';
+---
+
+<section id="education" class="relative py-32 md:py-48 px-6 md:px-10 border-t hairline">
+  <div class="mx-auto w-full max-w-[1400px]">
+    <div class="grid md:grid-cols-[0.4fr_1.6fr] gap-10 md:gap-20">
+      <div class="reveal">
+        <span class="label">
+          [ 07 · education & awards ]
+        </span>
+      </div>
+
+      <div>
+        <h2 class="font-display text-3xl md:text-5xl font-semibold tracking-[-0.01em] leading-[1.1] reveal">
+          School and <span class="text-[var(--color-ink-dim)]">a few medals.</span>
+        </h2>
+
+        <div class="mt-12 grid md:grid-cols-2 gap-10 md:gap-16">
+          <!-- education -->
+          <div>
+            <div class="label mb-5">— education</div>
+            <ol class="divide-y divide-white/[0.06]">
+              {education.map((e) => (
+                <li class="reveal py-5">
+                  <div class="flex items-baseline justify-between gap-4">
+                    <h3 class="font-display text-base md:text-lg font-semibold tracking-[-0.005em]">
+                      {e.qualification}
+                    </h3>
+                    <span class="font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--color-ink-faint)] whitespace-nowrap">
+                      {e.period}
+                    </span>
+                  </div>
+                  <div class="mt-1 flex items-center gap-3 flex-wrap font-mono text-[12px] text-[var(--color-ink-dim)]">
+                    <span>{e.school}</span>
+                    {e.notable && (
+                      <>
+                        <span class="text-[var(--color-ink-faint)]">·</span>
+                        <span class="text-[var(--color-acid)]">{e.notable}</span>
+                      </>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          <!-- awards -->
+          <div>
+            <div class="label mb-5">— awards</div>
+            <ol class="grid grid-cols-1 gap-2">
+              {awards.map((a) => (
+                <li class="reveal flex items-baseline justify-between gap-4 rounded-lg border border-white/[0.05] bg-white/[0.015] px-3.5 py-3 ring-line hover:border-white/15 transition-colors">
+                  <div class="min-w-0">
+                    <div class="font-display text-[13.5px] font-semibold tracking-[-0.005em] truncate">
+                      <span class="text-[var(--color-acid)]">✦</span> {a.title}
+                    </div>
+                    <div class="mt-0.5 font-mono text-[10.5px] text-[var(--color-ink-faint)] uppercase tracking-[0.18em]">
+                      {a.where}
+                    </div>
+                  </div>
+                  <span class="font-mono text-[10.5px] uppercase tracking-[0.22em] text-[var(--color-ink-dim)] whitespace-nowrap">
+                    {a.year}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

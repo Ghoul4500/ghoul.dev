@@ -1,0 +1,35 @@
+---
+import LiveStats from './islands/LiveStats.svelte';
+---
+
+<section id="about" class="relative py-32 md:py-48 px-6 md:px-10">
+  <div class="mx-auto w-full max-w-[1400px]">
+    <div class="grid md:grid-cols-[0.4fr_1.6fr] gap-10 md:gap-20">
+      <div class="reveal">
+        <span class="label">
+          [ 02 · about ]
+        </span>
+      </div>
+
+      <div class="reveal">
+        <h2 class="font-display text-3xl md:text-5xl font-semibold tracking-[-0.01em] leading-[1.1] text-balance max-w-[24ch]">
+          Full-stack dev who also
+          <span class="text-[var(--color-ink-dim)]">likes the low-level stuff.</span>
+        </h2>
+
+        <div class="mt-12 grid md:grid-cols-2 gap-10 font-body text-[16px] md:text-[17px] leading-[1.65] text-[var(--color-ink-dim)] max-w-5xl font-light">
+          <p>
+            I'm Ahmed. Day job is at <a href="https://oxiqa.com" target="_blank" rel="noopener noreferrer" data-cursor="visit" class="text-[var(--color-ink)] underline decoration-[var(--color-acid)] underline-offset-4 decoration-[1.5px]">OXIQA</a>. On the side I run <a href="https://zenryk.com" target="_blank" rel="noopener noreferrer" data-cursor="visit" class="text-[var(--color-ink)] underline decoration-[var(--color-acid)] underline-offset-4 decoration-[1.5px]">Zenryk</a> and work with <a href="https://synetecs.io" target="_blank" rel="noopener noreferrer" data-cursor="visit" class="text-[var(--color-ink)] underline decoration-[var(--color-acid)] underline-offset-4 decoration-[1.5px]">Synetecs</a> on their AI stuff. The work is usually APIs, databases, frontend, and the Linux boxes everything runs on.
+          </p>
+          <p>
+            When I'm not doing client work I send Rust patches to <a href="https://asus-linux.org" target="_blank" rel="noopener noreferrer" data-cursor="visit" class="text-[var(--color-ink)] underline decoration-[var(--color-acid)] underline-offset-4 decoration-[1.5px]">asus-linux</a> (the project that makes ROG laptops actually usable on Linux) and help out at the <a href="https://opengamingcollective.org" target="_blank" rel="noopener noreferrer" data-cursor="visit" class="text-[var(--color-ink)] underline decoration-[var(--color-acid)] underline-offset-4 decoration-[1.5px]">Open Gaming Collective</a>. Before I got into dev I was pulling fiber cable for Ooredoo, so the path here was field → provisioning → mobile apps → everything else.
+          </p>
+        </div>
+
+        <div class="mt-16">
+          <LiveStats client:visible />
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

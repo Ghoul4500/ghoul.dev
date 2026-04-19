@@ -1,0 +1,86 @@
+---
+import '../styles/global.css';
+import Cursor from '../components/islands/Cursor.svelte';
+import ShaderBg from '../components/islands/ShaderBg.svelte';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Ahmed Yaseen — Full-stack engineer · ghoul.dev',
+  description = 'Full-stack engineer working across TypeScript, Rust and Python. Engineer at OXIQA, founder of Zenryk, collaborator with Synetecs. Upstream contributor to asus-linux and Open Gaming Collective.',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0a0a0a" />
+
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://ghoul.dev" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <title>{title}</title>
+  </head>
+  <body>
+    <ShaderBg client:load />
+    <Cursor client:load />
+
+    <a href="#main" class="sr-only">Skip to content</a>
+
+    <slot />
+
+    <script>
+      // Scroll reveal via IntersectionObserver — zero-dep, buttery
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) {
+              e.target.classList.add('in');
+              io.unobserve(e.target);
+            }
+          }
+        },
+        { rootMargin: '-10% 0px -5% 0px', threshold: 0.01 }
+      );
+      requestAnimationFrame(() => {
+        document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+      });
+
+      // Keyboard helpers
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'g' && !e.metaKey && !e.ctrlKey) {
+          const s = (document.activeElement as HTMLElement)?.tagName;
+          if (s === 'INPUT' || s === 'TEXTAREA') return;
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+</style>
