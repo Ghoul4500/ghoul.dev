@@ -14,8 +14,8 @@ export type Client = {
 
 export const clients: Client[] = [
   {
-    name: 'Ministry of Higher Education — HEMS',
-    short: 'MoHE · HEMS',
+    name: 'Ministry of Higher Education — Kuri Portal',
+    short: 'MoHE · Kuri Portal',
     kind: 'government',
     role: 'Lead developer',
     through: 'OXIQA',
