@@ -1,0 +1,37 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-ghoul-dev
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: deploy to verity
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Write SSH key
+        env:
+          SSH_KEY: ${{ secrets.VERITY_SSH_KEY }}
+          SSH_HOST: ${{ secrets.VERITY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Trigger remote deploy
+        env:
+          SSH_HOST: ${{ secrets.VERITY_HOST }}
+          SSH_USER: ${{ secrets.VERITY_USER }}
+        run: |
+          # The key on the server is locked to `command="/opt/ghoul.dev/scripts/deploy.sh"`,
+          # so any command we send here is ignored — just the script runs.
+          ssh -o BatchMode=yes "$SSH_USER@$SSH_HOST"
