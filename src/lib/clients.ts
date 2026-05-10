@@ -185,7 +185,5 @@ export const awards: Award[] = [
   { title: 'First Class Honours — BSc Computer Science', where: 'UWE Bristol', year: '2025' },
   { title: '2nd Place · CyberExpo CTF', where: 'CyberExpo', year: '2024' },
   { title: "Dean's List Diploma", where: 'Villa College', year: '2021' },
-  { title: 'Employee of the Month', where: 'Ooredoo Maldives', year: 'Jun 2022' },
-  { title: 'Employee of the Month', where: 'Ooredoo Maldives', year: 'Sep 2022' },
   { title: "National Top 7 · O'Levels", where: 'Maldives', year: '2019' },
 ];
