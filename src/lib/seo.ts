@@ -54,9 +54,8 @@ export const PERSON = {
 // Default page-level metadata. Title is intentionally keyword-rich but readable.
 export const DEFAULT_TITLE = `${PERSON.fullName} (Ghoul) — Full-stack Engineer · ${SITE.name}`;
 export const DEFAULT_DESCRIPTION =
-  `${PERSON.fullName} — full-stack engineer based in the Maldives, known online as Ghoul. ` +
-  `Engineer at OXIQA, founder of Zenryk, collaborator with Synetecs and iqdot. ` +
-  `Upstream contributor to asus-linux and the Open Gaming Collective (OGC). TypeScript, Rust, Python, PHP, Go.`;
+  `${PERSON.fullName} (Ghoul) — full-stack engineer in the Maldives. ` +
+  `Engineer at OXIQA, founder of Zenryk. Contributor to asus-linux and Open Gaming Collective.`;
 
 // Comma-separated keyword string. Engines that still use this tag will pick up names,
 // usernames, orgs, projects and clients automatically from the source-of-truth lib files.
