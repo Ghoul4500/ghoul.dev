@@ -2,6 +2,11 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { getCachedStats } from './github.ts';
+import { ensureBootstrap } from '../lib/status/bootstrap.ts';
+import { load as loadStatus } from '../lib/status/store.ts';
+import { derive as deriveStatus } from '../lib/status/derive.ts';
+
+ensureBootstrap();
 
 export const app = new Hono().basePath('/api');
 
@@ -21,6 +26,13 @@ app.get('/github/stats', async (c) => {
   } catch (err: any) {
     return c.json({ error: err?.message ?? 'upstream error' }, 502);
   }
+});
+
+app.get('/status', async (c) => {
+  const store = await loadStatus();
+  const state = deriveStatus(store);
+  c.header('Cache-Control', 'no-store');
+  return c.json(state);
 });
 
 app.get('/now', (c) => {
