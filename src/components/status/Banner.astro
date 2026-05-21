@@ -1,0 +1,84 @@
+---
+import type { BannerMode } from '../../lib/status/derive.ts';
+
+interface Props {
+  mode: BannerMode;
+  title: string | null;
+  subtitle: string | null;
+}
+
+const { mode, title, subtitle } = Astro.props;
+---
+{mode !== 'none' && (
+  <div class={`status-banner status-banner--${mode}`}>
+    <div class="status-banner__inner">
+      <div class="status-banner__dot" aria-hidden="true"></div>
+      <div class="status-banner__text">
+        <div class="status-banner__title">{title}</div>
+        {subtitle && <div class="status-banner__sub">{subtitle}</div>}
+      </div>
+      <div class="status-banner__tag label">
+        {mode === 'presumed_dead' ? '[ critical / unreachable ]' : '[ major / in progress ]'}
+      </div>
+    </div>
+  </div>
+)}
+
+<style>
+  .status-banner {
+    position: relative;
+    width: 100%;
+    border-bottom: 1px solid color-mix(in srgb, #ff5252 30%, transparent);
+    background: linear-gradient(180deg, color-mix(in srgb, #4a1117 65%, transparent), color-mix(in srgb, #2a0a0e 30%, transparent));
+    backdrop-filter: blur(6px);
+    z-index: 10;
+  }
+  .status-banner__inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .status-banner__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: #ff5252;
+    box-shadow: 0 0 12px #ff5252;
+    animation: pulse 1.4s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  .status-banner__text { flex: 1; min-width: 0; }
+  .status-banner__title {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #ffb4b4;
+    font-weight: 600;
+  }
+  .status-banner__sub {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: color-mix(in srgb, #ffd0d0 70%, transparent);
+    margin-top: 2px;
+  }
+  .status-banner__tag {
+    color: color-mix(in srgb, #ffd0d0 60%, transparent) !important;
+    flex-shrink: 0;
+  }
+  .status-banner--presumed_dead {
+    background: linear-gradient(180deg, #2a0509, #1a0307);
+    border-bottom: 1px solid #ff5252;
+  }
+  .status-banner--presumed_dead .status-banner__title {
+    font-size: 15px;
+    color: #ff7878;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+  }
+</style>

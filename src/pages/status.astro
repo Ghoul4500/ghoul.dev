@@ -1,0 +1,178 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Banner from '../components/status/Banner.astro';
+import ComponentGrid from '../components/status/ComponentGrid.astro';
+import IncidentTimeline from '../components/status/IncidentTimeline.astro';
+import { ensureBootstrap } from '../lib/status/bootstrap.ts';
+import { load } from '../lib/status/store.ts';
+import { derive, formatAbsolute, formatRelative } from '../lib/status/derive.ts';
+
+ensureBootstrap();
+
+const store = await load();
+const state = derive(store);
+
+const isRed = state.bannerMode !== 'none';
+const titleText = isRed
+  ? 'service status — incident in progress'
+  : 'service status — all systems operational';
+const description = isRed
+  ? 'live infrastructure status. multiple components affected.'
+  : 'live infrastructure status. all systems operating within nominal parameters.';
+---
+<Layout title={titleText} description={description} path="/status">
+  <div class={`status-shell ${isRed ? 'status-shell--red' : ''}`}>
+    <div class="status-tint" aria-hidden="true"></div>
+
+    <Banner
+      mode={state.bannerMode}
+      title={state.bannerTitle}
+      subtitle={state.bannerSubtitle}
+    />
+
+    <main class="status-main">
+      <header class="status-hero">
+        <div class="label status-hero__crumb">
+          <span>[ /status · ghoul.dev ]</span>
+          <span class="status-hero__dot">·</span>
+          <span>updated {state.lastUpdated ? formatRelative(Date.parse(state.lastUpdated)) : 'just now'}</span>
+        </div>
+        <h1 class="status-hero__heading">
+          <span class="status-hero__caret">&gt;</span>
+          {state.overallSummary}
+        </h1>
+        <p class="status-hero__sub">
+          this page reflects the current operational status of the underlying
+          biological system. updates are appended in real time.
+        </p>
+      </header>
+
+      <section class="status-section">
+        <div class="status-section__head label">
+          <span>[ 01 · component status ]</span>
+        </div>
+        <ComponentGrid components={state.components} />
+      </section>
+
+      {state.activeIncidents.length > 0 && (
+        <section class="status-section">
+          <div class="status-section__head label">
+            <span>[ 02 · active incidents ]</span>
+            <span>{state.activeIncidents.length} in progress</span>
+          </div>
+          {state.activeIncidents.map((inc) => (
+            <IncidentTimeline incident={inc} active />
+          ))}
+        </section>
+      )}
+
+      <section class="status-section">
+        <div class="status-section__head label">
+          <span>[ 03 · past incidents · 30d ]</span>
+          <span>{state.pastIncidents.length} resolved</span>
+        </div>
+        {state.pastIncidents.length === 0 ? (
+          <p class="status-empty">no incidents in the last 30 days.</p>
+        ) : (
+          state.pastIncidents.map((inc) => (
+            <IncidentTimeline incident={inc} active={false} />
+          ))
+        )}
+      </section>
+
+      <footer class="status-foot label">
+        <span>data refreshed on request · scheduler runs every 60s</span>
+        <span>[ ghoul.dev · status · v0.1 ]</span>
+      </footer>
+    </main>
+  </div>
+</Layout>
+
+<style>
+  .status-shell {
+    position: relative;
+    min-height: 100svh;
+  }
+  .status-tint {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    transition: background 400ms ease;
+  }
+  .status-shell--red .status-tint {
+    background:
+      radial-gradient(ellipse at 50% 0%, color-mix(in srgb, #6a0a14 28%, transparent), transparent 60%),
+      color-mix(in srgb, #1a0507 50%, transparent);
+  }
+
+  .status-main {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 84px 24px 80px;
+  }
+  @media (min-width: 768px) {
+    .status-main { padding-left: 40px; padding-right: 40px; }
+  }
+
+  .status-hero { margin-bottom: 56px; }
+  .status-hero__crumb {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+  .status-hero__dot { opacity: 0.5; }
+  .status-hero__heading {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 4vw, 2.6rem);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    font-weight: 500;
+    color: var(--color-ink);
+    margin: 0;
+    max-width: 28ch;
+  }
+  .status-hero__caret {
+    color: var(--color-acid);
+    margin-right: 8px;
+  }
+  .status-shell--red .status-hero__caret { color: #ff7878; }
+  .status-hero__sub {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--color-ink-faint);
+    margin-top: 14px;
+    max-width: 64ch;
+    line-height: 1.55;
+  }
+
+  .status-section { margin-bottom: 48px; }
+  .status-section__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    color: var(--color-ink-faint) !important;
+  }
+
+  .status-empty {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--color-ink-faint);
+    padding: 24px;
+    border: 1px dashed color-mix(in srgb, var(--color-ink) 9%, transparent);
+    text-align: center;
+  }
+
+  .status-foot {
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid color-mix(in srgb, var(--color-ink) 8%, transparent);
+    padding-top: 16px;
+    margin-top: 32px;
+    color: var(--color-ink-faint) !important;
+  }
+</style>

@@ -1,0 +1,97 @@
+---
+import type { ComponentState } from '../../lib/status/derive.ts';
+import { SEVERITY_LABEL } from '../../lib/status/derive.ts';
+
+interface Props {
+  components: ComponentState[];
+}
+
+const { components } = Astro.props;
+---
+<div class="status-grid">
+  {components.map((c) => (
+    <div class={`status-cell sev-${c.severity}`}>
+      <div class="status-cell__header">
+        <span class="status-cell__name">{c.label}</span>
+        <span class="status-cell__dot" aria-hidden="true"></span>
+      </div>
+      <div class="status-cell__sev">{SEVERITY_LABEL[c.severity]}</div>
+      <div class="status-cell__desc">{c.description}</div>
+    </div>
+  ))}
+</div>
+
+<style>
+  .status-grid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 10px;
+  }
+  @media (min-width: 640px) {
+    .status-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1024px) {
+    .status-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  }
+  .status-cell {
+    position: relative;
+    padding: 14px 16px;
+    border: 1px solid color-mix(in srgb, var(--color-ink) 9%, transparent);
+    background: color-mix(in srgb, var(--color-bg-elev) 65%, transparent);
+    backdrop-filter: blur(4px);
+    border-left-width: 3px;
+    transition: background 200ms ease;
+  }
+  .status-cell__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .status-cell__name {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    color: var(--color-ink);
+    font-weight: 500;
+  }
+  .status-cell__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+  .status-cell__sev {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+  .status-cell__desc {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-ink-faint);
+    margin-top: 6px;
+    line-height: 1.45;
+  }
+  .sev-operational    { border-left-color: var(--color-acid); }
+  .sev-operational    .status-cell__dot { background: var(--color-acid); box-shadow: 0 0 8px var(--color-acid); }
+  .sev-operational    .status-cell__sev { color: var(--color-acid); }
+
+  .sev-degraded       { border-left-color: #d4b34d; }
+  .sev-degraded       .status-cell__dot { background: #d4b34d; box-shadow: 0 0 8px color-mix(in srgb, #d4b34d 60%, transparent); }
+  .sev-degraded       .status-cell__sev { color: #d4b34d; }
+
+  .sev-partial_outage { border-left-color: var(--color-ember); }
+  .sev-partial_outage .status-cell__dot { background: var(--color-ember); box-shadow: 0 0 8px color-mix(in srgb, var(--color-ember) 60%, transparent); }
+  .sev-partial_outage .status-cell__sev { color: var(--color-ember); }
+
+  .sev-major_outage   { border-left-color: #ff5252; }
+  .sev-major_outage   .status-cell__dot { background: #ff5252; box-shadow: 0 0 10px #ff5252; }
+  .sev-major_outage   .status-cell__sev { color: #ff7878; }
+
+  .sev-presumed_dead  { border-left-color: #b03030; }
+  .sev-presumed_dead  .status-cell__dot { background: #b03030; }
+  .sev-presumed_dead  .status-cell__sev { color: #b03030; }
+</style>

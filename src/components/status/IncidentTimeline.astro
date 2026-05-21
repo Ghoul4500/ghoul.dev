@@ -1,0 +1,189 @@
+---
+import type { Incident } from '../../lib/status/types.ts';
+import { PRESETS } from '../../lib/status/presets.ts';
+import { formatAbsolute, formatRelative } from '../../lib/status/derive.ts';
+
+interface Props {
+  incident: Incident;
+  active: boolean;
+}
+
+const { incident, active } = Astro.props;
+const preset = PRESETS[incident.type];
+const updates = [...incident.updates].sort(
+  (a, b) => Date.parse(b.at) - Date.parse(a.at)
+);
+
+const latestPhase = updates[0]?.phase ?? 'investigating';
+
+let stateLabel = latestPhase.toUpperCase();
+if (incident.presumed_dead) stateLabel = 'PRESUMED DEAD';
+else if (incident.resolved_at) stateLabel = 'RESOLVED';
+else if (incident.presumed_recovered) stateLabel = 'PRESUMED RECOVERED';
+else if (incident.wellness_check_sent_at) stateLabel = 'WELLNESS CHECK PENDING';
+
+const stateClass = (() => {
+  if (incident.presumed_dead) return 'state--dead';
+  if (incident.resolved_at) return 'state--resolved';
+  if (incident.presumed_recovered) return 'state--recovered';
+  if (incident.wellness_check_sent_at) return 'state--warning';
+  switch (latestPhase) {
+    case 'investigating': return 'state--major';
+    case 'identified': return 'state--major';
+    case 'monitoring': return 'state--monitoring';
+    case 'resolved': return 'state--resolved';
+    default: return 'state--monitoring';
+  }
+})();
+---
+<article class={`incident ${active ? 'incident--active' : 'incident--past'}`}>
+  <header class="incident__header">
+    <div class="incident__title-row">
+      <span class={`incident__state ${stateClass}`}>{stateLabel}</span>
+      <h3 class="incident__title">{preset.banner_label}</h3>
+    </div>
+    <div class="incident__meta label">
+      <span>started · {formatAbsolute(incident.started_at)}</span>
+      <span class="incident__sep">·</span>
+      <span>{formatRelative(Date.parse(incident.started_at))}</span>
+      {incident.resolved_at && (
+        <>
+          <span class="incident__sep">·</span>
+          <span>resolved · {formatAbsolute(incident.resolved_at)}</span>
+        </>
+      )}
+    </div>
+  </header>
+
+  <ol class="incident__timeline">
+    {updates.map((u) => (
+      <li class={`tl-entry tl-entry--${u.phase} ${u.auto ? 'tl-entry--auto' : ''}`}>
+        <div class="tl-entry__rail" aria-hidden="true"></div>
+        <div class="tl-entry__body">
+          <div class="tl-entry__head">
+            <span class="tl-entry__phase">{u.phase}</span>
+            <span class="tl-entry__time label">{formatAbsolute(u.at)}</span>
+            {u.auto && <span class="tl-entry__auto label">system</span>}
+          </div>
+          <p class="tl-entry__text">{u.text}</p>
+        </div>
+      </li>
+    ))}
+  </ol>
+</article>
+
+<style>
+  .incident {
+    border: 1px solid color-mix(in srgb, var(--color-ink) 9%, transparent);
+    background: color-mix(in srgb, var(--color-bg-elev) 55%, transparent);
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+  .incident--past { opacity: 0.78; }
+
+  .incident__header {
+    border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 8%, transparent);
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+  }
+  .incident__title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .incident__state {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    padding: 3px 8px;
+    border: 1px solid currentColor;
+    text-transform: uppercase;
+  }
+  .state--major      { color: #ff7878; }
+  .state--monitoring { color: var(--color-ember); }
+  .state--resolved   { color: var(--color-acid); }
+  .state--recovered  { color: var(--color-cyan); }
+  .state--warning    { color: #d4b34d; }
+  .state--dead       { color: #ff5252; }
+  .incident__title {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+    margin: 0;
+    font-weight: 500;
+  }
+  .incident__meta {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    color: var(--color-ink-faint) !important;
+  }
+  .incident__sep { opacity: 0.5; }
+
+  .incident__timeline {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .tl-entry {
+    position: relative;
+    display: grid;
+    grid-template-columns: 12px 1fr;
+    gap: 14px;
+    padding: 10px 0;
+  }
+  .tl-entry:not(:last-child) {
+    border-bottom: 1px dashed color-mix(in srgb, var(--color-ink) 7%, transparent);
+  }
+  .tl-entry__rail {
+    position: relative;
+    width: 12px;
+  }
+  .tl-entry__rail::before {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 6px;
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--color-ink-faint);
+  }
+  .tl-entry--investigating .tl-entry__rail::before { background: #ff7878; box-shadow: 0 0 6px #ff7878; }
+  .tl-entry--identified    .tl-entry__rail::before { background: var(--color-ember); box-shadow: 0 0 6px var(--color-ember); }
+  .tl-entry--monitoring    .tl-entry__rail::before { background: #d4b34d; box-shadow: 0 0 6px color-mix(in srgb, #d4b34d 60%, transparent); }
+  .tl-entry--resolved      .tl-entry__rail::before { background: var(--color-acid); box-shadow: 0 0 6px var(--color-acid); }
+
+  .tl-entry__head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .tl-entry__phase {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-ink-dim);
+  }
+  .tl-entry__time {
+    color: var(--color-ink-faint) !important;
+  }
+  .tl-entry__auto {
+    color: var(--color-violet) !important;
+    border: 1px solid color-mix(in srgb, var(--color-violet) 30%, transparent);
+    padding: 1px 6px;
+  }
+  .tl-entry__text {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--color-ink);
+    margin: 4px 0 0;
+    line-height: 1.55;
+  }
+</style>
