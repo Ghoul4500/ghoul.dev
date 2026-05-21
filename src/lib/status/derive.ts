@@ -145,12 +145,16 @@ function computeHistory(
   for (let i = days - 1; i >= 0; i--) {
     const dayEnd = now - i * dayMs;
     const dayStart = dayEnd - dayMs;
+    const isToday = i === 0;
     let worst: Severity = 'operational';
     for (const inc of incidents) {
       const incStart = Date.parse(inc.started_at);
       const incEnd = inc.resolved_at ? Date.parse(inc.resolved_at) : now;
       if (incStart >= dayEnd || incEnd <= dayStart) continue;
-      if (inc.presumed_dead) {
+      if (isToday && inc.presumed_dead) {
+        // Match the live derivation: presumed-dead forces every component to
+        // major for the current snapshot. Historical days still use the
+        // incident's actual impact map (we don't track when the flip happened).
         worst = worse(worst, 'major_outage');
         continue;
       }
