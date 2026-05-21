@@ -17,12 +17,21 @@ export const SEVERITY_LABEL: Record<Severity, string> = {
   presumed_dead:  'Unreachable',
 };
 
+export type DayCell = {
+  date: string;
+  severity: Severity;
+};
+
 export type ComponentState = {
   id: ComponentId;
   label: string;
   description: string;
   severity: Severity;
+  /** Oldest-first array of per-day worst severity. Last entry = today. */
+  history: DayCell[];
 };
+
+export const HISTORY_DAYS = 90;
 
 export type BannerMode = 'none' | 'major' | 'presumed_dead';
 
@@ -69,6 +78,7 @@ export function derive(store: Store, now = Date.now()): PageState {
     label: c.label,
     description: c.description,
     severity: componentSeverity.get(c.id) ?? 'operational',
+    history: computeHistory(c.id, store.incidents, HISTORY_DAYS, now),
   }));
 
   let bannerMode: BannerMode = 'none';
@@ -115,6 +125,45 @@ export function derive(store: Store, now = Date.now()): PageState {
     overallSummary,
     lastUpdated,
   };
+}
+
+/**
+ * For each of the last `days` days, find the worst severity this component
+ * experienced. A day is considered impacted if any incident that touches the
+ * component overlapped the day's [start, end) window — even briefly. Days
+ * outside the retention window naturally come back as `operational` because
+ * the store has pruned those incidents.
+ */
+function computeHistory(
+  componentId: ComponentId,
+  incidents: Incident[],
+  days: number,
+  now: number
+): DayCell[] {
+  const dayMs = 24 * 60 * 60 * 1000;
+  const out: DayCell[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const dayEnd = now - i * dayMs;
+    const dayStart = dayEnd - dayMs;
+    let worst: Severity = 'operational';
+    for (const inc of incidents) {
+      const incStart = Date.parse(inc.started_at);
+      const incEnd = inc.resolved_at ? Date.parse(inc.resolved_at) : now;
+      if (incStart >= dayEnd || incEnd <= dayStart) continue;
+      if (inc.presumed_dead) {
+        worst = worse(worst, 'major_outage');
+        continue;
+      }
+      const impact = inc.impact[componentId];
+      if (!impact) continue;
+      worst = worse(worst, impact);
+    }
+    out.push({
+      date: new Date(dayEnd).toISOString().slice(0, 10),
+      severity: worst,
+    });
+  }
+  return out;
 }
 
 export function formatRelative(then: number, now = Date.now()): string {

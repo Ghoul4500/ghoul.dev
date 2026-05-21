@@ -1,12 +1,18 @@
 ---
 import type { ComponentState } from '../../lib/status/derive.ts';
-import { SEVERITY_LABEL } from '../../lib/status/derive.ts';
+import { SEVERITY_LABEL, HISTORY_DAYS } from '../../lib/status/derive.ts';
 
 interface Props {
   components: ComponentState[];
 }
 
 const { components } = Astro.props;
+
+function uptimePct(history: ComponentState['history']): string {
+  const total = history.length || 1;
+  const ok = history.filter((h) => h.severity === 'operational').length;
+  return ((ok / total) * 100).toFixed(2);
+}
 ---
 <div class="status-grid">
   {components.map((c) => (
@@ -17,6 +23,20 @@ const { components } = Astro.props;
       </div>
       <div class="status-cell__sev">{SEVERITY_LABEL[c.severity]}</div>
       <div class="status-cell__desc">{c.description}</div>
+
+      <div class="status-cell__history" role="img" aria-label={`${c.label} status, last ${HISTORY_DAYS} days`}>
+        {c.history.map((d) => (
+          <span
+            class={`uptime-bar sev-bar-${d.severity}`}
+            title={`${d.date} — ${SEVERITY_LABEL[d.severity]}`}
+          ></span>
+        ))}
+      </div>
+      <div class="status-cell__history-foot label">
+        <span>{HISTORY_DAYS}d ago</span>
+        <span class="status-cell__uptime">{uptimePct(c.history)}% uptime</span>
+        <span>today</span>
+      </div>
     </div>
   ))}
 </div>
@@ -94,4 +114,39 @@ const { components } = Astro.props;
   .sev-presumed_dead  { border-left-color: #b03030; }
   .sev-presumed_dead  .status-cell__dot { background: #b03030; }
   .sev-presumed_dead  .status-cell__sev { color: #b03030; }
+
+  .status-cell__history {
+    display: flex;
+    gap: 1px;
+    margin-top: 14px;
+    height: 26px;
+    align-items: stretch;
+  }
+  .uptime-bar {
+    flex: 1 1 0;
+    min-width: 0;
+    background: color-mix(in srgb, var(--color-acid) 55%, transparent);
+    border-radius: 1px;
+    transition: transform 120ms ease, filter 120ms ease;
+  }
+  .uptime-bar:hover {
+    transform: scaleY(1.12);
+    filter: brightness(1.4);
+  }
+  .sev-bar-operational    { background: color-mix(in srgb, var(--color-acid) 55%, transparent); }
+  .sev-bar-degraded       { background: color-mix(in srgb, #d4b34d 80%, transparent); }
+  .sev-bar-partial_outage { background: color-mix(in srgb, var(--color-ember) 85%, transparent); }
+  .sev-bar-major_outage   { background: #ff5252; box-shadow: 0 0 4px color-mix(in srgb, #ff5252 60%, transparent); }
+  .sev-bar-presumed_dead  { background: #b03030; }
+
+  .status-cell__history-foot {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 9px !important;
+    color: var(--color-ink-faint) !important;
+  }
+  .status-cell__uptime {
+    color: var(--color-ink-dim) !important;
+  }
 </style>
