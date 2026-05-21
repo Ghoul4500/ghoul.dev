@@ -25,3 +25,6 @@ pnpm-debug.log*
 
 # runtime stats cache
 .cache/
+
+# runtime status page data (incidents JSON)
+data/
