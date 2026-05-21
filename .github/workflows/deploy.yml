@@ -31,7 +31,21 @@ jobs:
         env:
           SSH_HOST: ${{ secrets.VERITY_HOST }}
           SSH_USER: ${{ secrets.VERITY_USER }}
+          RUNTIME_GITHUB_TOKEN: ${{ secrets.RUNTIME_GITHUB_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_ALLOWED_USER_ID: ${{ secrets.TELEGRAM_ALLOWED_USER_ID }}
         run: |
           # The key on the server is locked to `command="/opt/ghoul.dev/scripts/deploy.sh"`,
-          # so any command we send here is ignored — just the script runs.
-          ssh -o BatchMode=yes "$SSH_USER@$SSH_HOST"
+          # so any command we send is ignored — only that script runs.
+          #
+          # We pipe a freshly-rendered env file over SSH stdin. The remote
+          # script drains stdin, validates that every line is `KEY=value`, and
+          # atomically replaces /opt/ghoul.dev/.env before building. That way
+          # Astro/Vite picks up the values at build time AND systemd picks
+          # them up when the service restarts. Empty stdin is a no-op on the
+          # other side — so this stays safe to invoke for manual debug too.
+          {
+            [ -n "${RUNTIME_GITHUB_TOKEN}" ]      && printf 'GITHUB_TOKEN=%s\n' "$RUNTIME_GITHUB_TOKEN"
+            [ -n "${TELEGRAM_BOT_TOKEN}" ]        && printf 'TELEGRAM_BOT_TOKEN=%s\n' "$TELEGRAM_BOT_TOKEN"
+            [ -n "${TELEGRAM_ALLOWED_USER_ID}" ]  && printf 'TELEGRAM_ALLOWED_USER_ID=%s\n' "$TELEGRAM_ALLOWED_USER_ID"
+          } | ssh -o BatchMode=yes "$SSH_USER@$SSH_HOST"
