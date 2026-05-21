@@ -6,10 +6,9 @@ const DATA_DIR = process.env.STATUS_DATA_DIR || join(process.cwd(), 'data');
 const STORE_FILE = join(DATA_DIR, 'status.json');
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
-let memory: Store | null = null;
 let writeChain: Promise<unknown> = Promise.resolve();
 
-async function readDisk(): Promise<Store> {
+export async function load(): Promise<Store> {
   try {
     const txt = await readFile(STORE_FILE, 'utf-8');
     const parsed = JSON.parse(txt) as Partial<Store>;
@@ -17,12 +16,6 @@ async function readDisk(): Promise<Store> {
   } catch {
     return { incidents: [] };
   }
-}
-
-export async function load(): Promise<Store> {
-  if (memory) return memory;
-  memory = await readDisk();
-  return memory;
 }
 
 function pruneOld(store: Store, now: number): Store {
@@ -47,7 +40,6 @@ export function mutate(updater: (s: Store) => Store | Promise<Store>): Promise<S
     const updated = await updater(draft);
     const pruned = pruneOld(updated, Date.now());
     await writeFile(STORE_FILE, JSON.stringify(pruned, null, 2));
-    memory = pruned;
     return pruned;
   });
   writeChain = next.catch(() => undefined);
