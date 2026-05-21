@@ -1,0 +1,57 @@
+{
+  "incidents": [
+    {
+      "id": "fixture-wellness",
+      "type": "sick",
+      "started_at": "__TS_HOURS_AGO_120__",
+      "resolved_at": null,
+      "presumed_dead": false,
+      "presumed_recovered": false,
+      "wellness_check_sent_at": "__TS_HOURS_AGO_6__",
+      "auto_resolve_offset_hours": 0,
+      "fired_check_ins": [0, 1, 2],
+      "impact": {
+        "brain": "major_outage",
+        "sleep": "degraded",
+        "code_output": "major_outage",
+        "dm_response": "partial_outage",
+        "email_response": "major_outage",
+        "social_battery": "major_outage",
+        "hydration": "degraded",
+        "vibes": "major_outage"
+      },
+      "updates": [
+        {
+          "at": "__TS_HOURS_AGO_120__",
+          "phase": "investigating",
+          "text": "Multiple components reporting failures. Cause under investigation."
+        },
+        {
+          "at": "__TS_HOURS_AGO_108__",
+          "phase": "monitoring",
+          "text": "Engineering attempted contact. Awaiting response.",
+          "auto": true
+        },
+        {
+          "at": "__TS_HOURS_AGO_84__",
+          "phase": "monitoring",
+          "text": "Second contact attempt. User unresponsive.",
+          "auto": true
+        },
+        {
+          "at": "__TS_HOURS_AGO_48__",
+          "phase": "monitoring",
+          "text": "Concern escalating. Wellness check under consideration.",
+          "auto": true
+        },
+        {
+          "at": "__TS_HOURS_AGO_6__",
+          "phase": "identified",
+          "text": "Engineering initiating final wellness check. No commits, no replies in 96h.",
+          "auto": true
+        }
+      ],
+      "last_user_reply_at": "__TS_HOURS_AGO_120__"
+    }
+  ]
+}

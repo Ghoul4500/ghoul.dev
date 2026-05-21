@@ -1,0 +1,35 @@
+{
+  "incidents": [
+    {
+      "id": "fixture-busy",
+      "type": "busy",
+      "started_at": "__TS_HOURS_AGO_5__",
+      "resolved_at": null,
+      "presumed_dead": false,
+      "presumed_recovered": false,
+      "wellness_check_sent_at": null,
+      "auto_resolve_offset_hours": 0,
+      "fired_check_ins": [],
+      "impact": {
+        "dm_response": "partial_outage",
+        "email_response": "degraded",
+        "social_battery": "major_outage",
+        "code_output": "operational",
+        "vibes": "degraded"
+      },
+      "updates": [
+        {
+          "at": "__TS_HOURS_AGO_5__",
+          "phase": "investigating",
+          "text": "Heads-down on a deadline. Inbox will go quiet for the rest of the day."
+        },
+        {
+          "at": "__TS_HOURS_AGO_3__",
+          "phase": "monitoring",
+          "text": "Still in deep work. Replies queued, will catch up tonight."
+        }
+      ],
+      "last_user_reply_at": "__TS_HOURS_AGO_3__"
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "incidents": [
+    {
+      "id": "fixture-sick",
+      "type": "sick",
+      "started_at": "__TS_HOURS_AGO_30__",
+      "resolved_at": null,
+      "presumed_dead": false,
+      "presumed_recovered": false,
+      "wellness_check_sent_at": null,
+      "auto_resolve_offset_hours": 0,
+      "fired_check_ins": [0],
+      "impact": {
+        "brain": "major_outage",
+        "sleep": "degraded",
+        "code_output": "major_outage",
+        "dm_response": "partial_outage",
+        "email_response": "major_outage",
+        "social_battery": "major_outage",
+        "hydration": "degraded",
+        "vibes": "major_outage"
+      },
+      "updates": [
+        {
+          "at": "__TS_HOURS_AGO_30__",
+          "phase": "investigating",
+          "text": "Woke up with a fever and a body that refuses to compile. Cause TBD."
+        },
+        {
+          "at": "__TS_HOURS_AGO_18__",
+          "phase": "monitoring",
+          "text": "Engineering attempted contact. Awaiting response.",
+          "auto": true
+        },
+        {
+          "at": "__TS_HOURS_AGO_8__",
+          "phase": "monitoring",
+          "text": "Slept ~14 hours. Vitals stabilizing but still cooked. Continued monitoring."
+        }
+      ],
+      "last_user_reply_at": "__TS_HOURS_AGO_2__"
+    },
+    {
+      "id": "fixture-grass-past",
+      "type": "touching-grass",
+      "started_at": "__TS_DAYS_AGO_6__",
+      "resolved_at": "__TS_DAYS_AGO_6_PLUS_6H__",
+      "presumed_dead": false,
+      "presumed_recovered": false,
+      "wellness_check_sent_at": null,
+      "auto_resolve_offset_hours": 0,
+      "fired_check_ins": [0],
+      "impact": {
+        "dm_response": "partial_outage",
+        "code_output": "major_outage"
+      },
+      "updates": [
+        {
+          "at": "__TS_DAYS_AGO_6__",
+          "phase": "investigating",
+          "text": "Going outside. Inbox not being read."
+        },
+        {
+          "at": "__TS_DAYS_AGO_6_PLUS_6H__",
+          "phase": "resolved",
+          "text": "Returned indoors. Sunlight exposure logged. Operational."
+        }
+      ],
+      "last_user_reply_at": "__TS_DAYS_AGO_6_PLUS_6H__"
+    }
+  ]
+}
