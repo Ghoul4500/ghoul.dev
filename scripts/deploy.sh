@@ -20,17 +20,14 @@ ENV_FILE=/opt/ghoul.dev/.env
 if IFS= read -r -t 2 _first 2>/dev/null; then
   TMP_ENV="$(mktemp)"
   trap 'rm -f "$TMP_ENV"' EXIT
-  {
-    printf '%s\n' "$_first"
-    /usr/bin/cat
-  } > "$TMP_ENV"
+  { printf '%s\n' "$_first"; /usr/bin/cat; } > "$TMP_ENV"
   if /usr/bin/grep -qvE '^(#.*)?$|^[A-Z_][A-Z0-9_]*=' "$TMP_ENV"; then
     echo "[deploy] stdin had unexpected content, refusing to touch $ENV_FILE" >&2
     exit 1
   fi
   chmod 600 "$TMP_ENV"
   mv "$TMP_ENV" "$ENV_FILE"
-  echo "[deploy] $ENV_FILE updated from secrets stream ($(/usr/bin/wc -l < "$ENV_FILE") line(s))"
+  echo "[deploy] $ENV_FILE updated ($(/usr/bin/wc -l < "$ENV_FILE") line(s))"
 fi
 
 cd /opt/ghoul.dev
