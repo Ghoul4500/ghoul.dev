@@ -6,6 +6,7 @@
     repo: string;
     fullName: string;
     url: string;
+    description: string | null;
     commits: number;
     additions: number;
     deletions: number;
@@ -39,34 +40,6 @@
     }
   });
 
-  // Owners we render cards for: union of live-data owners and manual-patch
-  // owners. Order: live-data owners first (in server-defined order), then any
-  // manual-only owners.
-  const ownerSet = $derived(() => {
-    const fromLive = orgs?.map((o) => o.owner) ?? [];
-    const fromManual = [...new Set(manualPatches.map((p) => p.owner))];
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const o of [...fromLive, ...fromManual]) {
-      if (seen.has(o)) continue;
-      seen.add(o);
-      out.push(o);
-    }
-    return out;
-  });
-
-  const liveByOwner = $derived(
-    new Map((orgs ?? []).map((o) => [o.owner, o]))
-  );
-  const manualByOwner = $derived(() => {
-    const m = new Map<string, ManualPatch[]>();
-    for (const p of manualPatches) {
-      if (!m.has(p.owner)) m.set(p.owner, []);
-      m.get(p.owner)!.push(p);
-    }
-    return m;
-  });
-
   const ORG_URL: Record<string, string> = {
     OpenGamingCollective: 'https://github.com/OpenGamingCollective',
     'caelestia-dots': 'https://github.com/caelestia-dots',
@@ -81,6 +54,18 @@
     return String(n);
   }
 
+  /**
+   * Returns the green/red split widths for a diff bar, in percent. Pure
+   * composition signal (additions vs deletions ratio) — magnitude is conveyed
+   * by the +X/−Y numbers shown alongside. Matches the GitHub PR diff aesthetic.
+   * Empty/zero falls back to a thin neutral fill so the bar isn't invisible.
+   */
+  function diffSplit(a: number, d: number) {
+    const total = a + d;
+    if (total === 0) return { add: 0, del: 0, empty: true };
+    return { add: (a / total) * 100, del: (d / total) * 100, empty: false };
+  }
+
   function statusLabel(s: ManualPatch['status']): string {
     switch (s) {
       case 'submitted':           return 'submitted';
@@ -89,104 +74,172 @@
       case 'in-mainline':         return 'mainline';
     }
   }
+
+  const ownerSet = $derived(() => {
+    const fromLive = orgs?.map((o) => o.owner) ?? [];
+    const fromManual = [...new Set(manualPatches.map((p) => p.owner))];
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const o of [...fromLive, ...fromManual]) {
+      if (seen.has(o)) continue;
+      seen.add(o);
+      out.push(o);
+    }
+    return out;
+  });
+
+  const liveByOwner = $derived(new Map((orgs ?? []).map((o) => [o.owner, o])));
 </script>
 
 {#if orgs === null && !loadError}
-  <div class="mb-6 break-inside-avoid rounded-2xl border border-white/[0.06] bg-white/[0.015] p-7 md:p-9 ring-line">
-    <div class="h-6 w-2/3 rounded bg-white/5 animate-pulse"></div>
-    <div class="mt-3 h-3 w-1/3 rounded bg-white/5 animate-pulse"></div>
-    <div class="mt-8 space-y-2">
-      {#each Array(4) as _}
-        <div class="h-3 rounded bg-white/[0.04] animate-pulse"></div>
-      {/each}
-    </div>
+  <div class="space-y-10">
+    {#each Array(2) as _}
+      <div>
+        <div class="h-3 w-1/3 rounded bg-white/[0.04] animate-pulse"></div>
+        <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {#each Array(3) as _}
+            <div class="rounded-xl border border-white/[0.06] bg-white/[0.015] p-5 h-36">
+              <div class="h-4 w-2/3 rounded bg-white/5 animate-pulse"></div>
+              <div class="mt-2 h-3 w-1/2 rounded bg-white/[0.04] animate-pulse"></div>
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/each}
   </div>
 {:else}
-  {#each ownerSet() as owner (owner)}
-    {@const live = liveByOwner.get(owner)}
-    {@const patches = manualByOwner().get(owner) ?? []}
-    <a
-      href={ORG_URL[owner] ?? `https://github.com/${owner}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      data-cursor="view"
-      class="mb-6 break-inside-avoid group relative overflow-hidden rounded-2xl border border-white/[0.06] hover:border-white/20 transition-colors bg-white/[0.015] p-7 md:p-9 ring-line block"
-    >
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <h3 class="font-display text-xl md:text-2xl font-semibold tracking-[-0.01em]">
+  <div class="space-y-12">
+    {#each ownerSet() as owner (owner)}
+      {@const live = liveByOwner.get(owner)}
+      <div>
+        <!-- Org header strip -->
+        <div class="flex items-baseline gap-4 flex-wrap mb-5">
+          <a
+            href={ORG_URL[owner] ?? `https://github.com/${owner}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-cursor="view"
+            class="font-display text-xl md:text-2xl font-semibold tracking-[-0.01em] text-[var(--color-ink)] hover:text-[var(--color-acid)] transition-colors"
+          >
             {ORG_LABEL[owner] ?? owner}
-          </h3>
-          <div class="mt-1 label normal-case tracking-wider text-[var(--color-ink-dim)]">
-            Contributor
-          </div>
+          </a>
+          <span class="flex-1 h-px bg-[var(--color-ink-faint)]/30 min-w-[2rem]"></span>
+          {#if live}
+            <span class="font-mono text-[11.5px] text-[var(--color-ink-dim)] whitespace-nowrap">
+              <span class="text-[var(--color-acid)]">{live.totals.commits}</span> commits
+              <span class="text-[var(--color-ink-faint)] mx-1">·</span>
+              <span class="text-emerald-400/80">+{compact(live.totals.additions)}</span>
+              <span class="text-[var(--color-ink-faint)]">/</span>
+              <span class="text-rose-400/80">−{compact(live.totals.deletions)}</span>
+              <span class="text-[var(--color-ink-faint)] mx-1">·</span>
+              {live.repos.length} {live.repos.length === 1 ? 'repo' : 'repos'}
+            </span>
+          {/if}
         </div>
-        {#if live}
-          <div class="text-right">
-            <div class="font-display text-3xl md:text-4xl font-semibold tracking-[-0.02em] text-[var(--color-acid)]">
-              {live.totals.commits}
-            </div>
-            <div class="label mt-0.5">commits</div>
-            <div class="mt-1 font-mono text-[10.5px] text-[var(--color-ink-dim)]">
-              +{compact(live.totals.additions)} / −{compact(live.totals.deletions)}
-            </div>
+
+        <!-- Repo card grid -->
+        {#if live && live.repos.length > 0}
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {#each live.repos as r}
+              {@const split = diffSplit(r.additions, r.deletions)}
+              <a
+                href={r.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-cursor="view"
+                class="group flex flex-col rounded-xl border border-white/[0.06] hover:border-white/20 transition-colors bg-white/[0.015] p-5 ring-line"
+              >
+                <div class="flex items-baseline gap-2">
+                  <span class="text-[var(--color-acid)] font-mono text-[14px] leading-none">⎇</span>
+                  <h3 class="font-display text-[15px] font-semibold tracking-[-0.005em] text-[var(--color-ink)] truncate">
+                    {r.repo}
+                  </h3>
+                </div>
+                <p class="mt-1.5 font-body text-[12.5px] leading-snug text-[var(--color-ink-dim)] min-h-[2.25em] line-clamp-2">
+                  {r.description ?? '—'}
+                </p>
+
+                <div class="mt-4 flex items-baseline justify-between gap-2 font-mono text-[11px]">
+                  <span class="text-[var(--color-ink-dim)]">
+                    {r.commits} {r.commits === 1 ? 'commit' : 'commits'}
+                  </span>
+                  <span class="text-[var(--color-ink-faint)]">
+                    <span class="text-emerald-400/85">+{compact(r.additions)}</span>
+                    <span class="mx-0.5">/</span>
+                    <span class="text-rose-400/85">−{compact(r.deletions)}</span>
+                  </span>
+                </div>
+
+                <div class="mt-1.5 flex h-1 rounded-full overflow-hidden bg-white/[0.06]">
+                  {#if split.empty}
+                    <div class="h-full w-full bg-white/[0.04]"></div>
+                  {:else}
+                    <div class="h-full bg-emerald-400/70" style="width: {split.add}%"></div>
+                    <div class="h-full bg-rose-400/70" style="width: {split.del}%"></div>
+                  {/if}
+                </div>
+
+                {#if r.approvedOpenPrs > 0}
+                  <div class="mt-3 inline-flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-[0.16em] text-[var(--color-ember)]">
+                    <span class="h-1.5 w-1.5 rounded-full bg-[var(--color-ember)] animate-pulse"></span>
+                    {r.approvedOpenPrs} approved · pending merge
+                  </div>
+                {/if}
+              </a>
+            {/each}
           </div>
         {/if}
       </div>
+    {/each}
 
-      {#if live && live.repos.length > 0}
-        <ul class="mt-6 divide-y divide-white/[0.05]">
-          {#each live.repos as r}
-            <li class="py-2.5 font-mono text-[12px] flex items-baseline justify-between gap-3">
-              <span class="text-[var(--color-ink)] truncate">{r.repo}</span>
-              <span class="flex items-baseline gap-3 text-[var(--color-ink-dim)] whitespace-nowrap">
-                <span>{r.commits} cmt</span>
-                <span class="text-[var(--color-ink-faint)]">
-                  +{compact(r.additions)} / −{compact(r.deletions)}
-                </span>
-                {#if r.approvedOpenPrs > 0}
-                  <span class="text-[var(--color-ember)]">
-                    {r.approvedOpenPrs} approved
-                  </span>
+    <!-- Upstream in flight (manual patches across all owners) -->
+    {#if manualPatches.length > 0}
+      <div>
+        <div class="flex items-baseline gap-4 flex-wrap mb-5">
+          <span class="font-display text-base font-semibold tracking-[-0.005em] text-[var(--color-ink)]">
+            upstream in flight
+          </span>
+          <span class="flex-1 h-px bg-[var(--color-ink-faint)]/30 min-w-[2rem]"></span>
+          <span class="font-mono text-[11.5px] text-[var(--color-ink-dim)]">
+            {manualPatches.length} {manualPatches.length === 1 ? 'patch' : 'patches'}
+          </span>
+        </div>
+        <ul class="rounded-xl border border-white/[0.06] bg-white/[0.015] ring-line divide-y divide-white/[0.05]">
+          {#each manualPatches as p}
+            <li class="p-4 font-mono text-[12px]">
+              <div class="flex items-baseline gap-2 flex-wrap">
+                <span class="text-[var(--color-cyan)]">{p.project}</span>
+                {#if p.treeUrl}
+                  <a
+                    href={p.treeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-cursor="view"
+                    class="text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors"
+                  >
+                    {p.sha.slice(0, 10)}
+                  </a>
+                {:else}
+                  <span class="text-[var(--color-ink-faint)]">{p.sha.slice(0, 10)}</span>
                 {/if}
-              </span>
+                <span class="text-[var(--color-ink-faint)]">·</span>
+                <span class="text-[var(--color-ember)] uppercase tracking-[0.14em] text-[10.5px]">
+                  {statusLabel(p.status)}
+                </span>
+              </div>
+              <div class="mt-1 text-[var(--color-ink-dim)] font-body text-[13px]">
+                {p.subject}
+              </div>
             </li>
           {/each}
         </ul>
-      {/if}
+      </div>
+    {/if}
 
-      {#if patches.length > 0}
-        <div class="mt-6 pt-5 border-t border-white/[0.06]">
-          <div class="label mb-3 text-[var(--color-ink-faint)]">— upstream in flight</div>
-          <ul class="space-y-2.5">
-            {#each patches as p}
-              <li class="font-mono text-[11.5px] leading-relaxed">
-                <div class="flex items-baseline gap-2 flex-wrap">
-                  <span class="text-[var(--color-cyan)]">{p.project}</span>
-                  <span class="text-[var(--color-ink-faint)]">{p.sha.slice(0, 10)}</span>
-                  <span class="text-[var(--color-ink-faint)]">·</span>
-                  <span class="text-[var(--color-ember)]">{statusLabel(p.status)}</span>
-                </div>
-                <div class="mt-0.5 text-[var(--color-ink-dim)] font-body text-[13px]">
-                  {p.subject}
-                </div>
-              </li>
-            {/each}
-          </ul>
-        </div>
-      {/if}
-
-      {#if !live && patches.length === 0}
-        <div class="mt-6 font-mono text-[12px] text-[var(--color-ink-faint)]">
-          no live data
-        </div>
-      {/if}
-    </a>
-  {/each}
-
-  {#if loadError && ownerSet().length === 0}
-    <div class="mb-6 break-inside-avoid rounded-2xl border border-white/[0.06] bg-white/[0.015] p-7 font-mono text-[12px] text-[var(--color-ink-faint)] ring-line">
-      contribution data unavailable
-    </div>
-  {/if}
+    {#if loadError && ownerSet().length === 0}
+      <div class="rounded-xl border border-white/[0.06] bg-white/[0.015] p-5 font-mono text-[12px] text-[var(--color-ink-faint)] ring-line">
+        contribution data unavailable
+      </div>
+    {/if}
+  </div>
 {/if}
