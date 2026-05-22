@@ -60,13 +60,10 @@ import { education, otherAwards } from '../lib/clients.ts';
             </h3>
             <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {otherAwards.map((a) => (
-                <li class="flex items-baseline justify-between gap-3 rounded-lg border border-white/[0.05] bg-white/[0.015] px-3.5 py-2.5 ring-line hover:border-white/15 transition-colors">
-                  <div class="flex items-baseline gap-2.5 min-w-0">
-                    <span class="text-[var(--color-acid)] flex-none">✦</span>
-                    <span class="font-display text-[13.5px] font-semibold tracking-[-0.005em] text-[var(--color-ink)] truncate">
-                      {a.title}
-                    </span>
-                  </div>
+                <li class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5 rounded-lg border border-white/[0.05] bg-white/[0.015] px-3.5 py-2.5 ring-line hover:border-white/15 transition-colors">
+                  <span class="font-display text-[13.5px] font-semibold tracking-[-0.005em] text-[var(--color-ink)]">
+                    <span class="text-[var(--color-acid)] mr-2">✦</span>{a.title}
+                  </span>
                   <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--color-ink-faint)] whitespace-nowrap">
                     {a.where} · {a.year}
                   </span>
