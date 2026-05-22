@@ -324,6 +324,25 @@ async function extendIncident(incidentId: string, hours: number): Promise<Action
   return outcome;
 }
 
+/**
+ * How long a pending check-in / wellness prompt stays "live" for the
+ * context-aware reply interpreter. After this, a plain "yes" no longer
+ * auto-resolves — the user falls back to the unprompted keyword path.
+ */
+const PENDING_PROMPT_TTL_HOURS = 48;
+
+/** Reply meaning "I'm back / better" — only used when a prompt is pending. */
+const AFFIRMATIVE_IN_CONTEXT_RE =
+  /^(y|yes|yea|yeah|yep|yup|ok|okay|k|sure|done|back|fine|better|alive|alright|all good|i'?m good|im good|much better|feeling better|all better|good now|👍|✅|✓)\b/i;
+
+/** Reply meaning "no, still down" — silent ack, no public update. */
+const NEGATIVE_IN_CONTEXT_RE =
+  /^(n|no|nope|nah|not yet|still|not really|👎|❌)\b/i;
+
+/** Broader recovery list used for unprompted text (no live check-in). */
+const UNPROMPTED_RECOVERY_RE =
+  /\b(better|back|fine|done|recovered|alive|alright|all good|good now|much better|feeling better|all better)\b/i;
+
 async function dispatch(text: string) {
   if (text.startsWith('/')) {
     const space = text.indexOf(' ');
@@ -332,10 +351,44 @@ async function dispatch(text: string) {
     const cmd = head.replace(/^\//, '').replace(/@\S+$/, '');
     return runCommand(cmd, args);
   }
-  if (/\b(better|back|fine|done|recovered|alive|alright|good now)\b/i.test(text)) {
+
+  const promptIncidentId = await findLivePromptIncidentId();
+  if (promptIncidentId) {
+    if (AFFIRMATIVE_IN_CONTEXT_RE.test(text)) {
+      const result = await recoverIncident(promptIncidentId);
+      await sendDm(result.ok ? '✓ marked recovered' : `✗ ${result.reason}`);
+      return;
+    }
+    if (NEGATIVE_IN_CONTEXT_RE.test(text)) {
+      const result = await ackStillCooked(promptIncidentId);
+      await sendDm(result.ok ? '✓ noted, will check back later' : `✗ ${result.reason}`);
+      return;
+    }
+    // Any other text in the context of a pending prompt is a real status
+    // update — post it publicly and clear the prompt.
+    return cmdUpdate(text);
+  }
+
+  if (UNPROMPTED_RECOVERY_RE.test(text)) {
     return cmdRecovered(text);
   }
   return cmdUpdate(text);
+}
+
+async function findLivePromptIncidentId(): Promise<string | null> {
+  const s = await load();
+  const cutoff = Date.now() - PENDING_PROMPT_TTL_HOURS * 3_600_000;
+  const candidates = s.incidents.filter(
+    (i) =>
+      i.resolved_at === null &&
+      i.pending_prompt !== null &&
+      Date.parse(i.pending_prompt.sent_at) >= cutoff
+  );
+  if (candidates.length === 0) return null;
+  const newest = candidates.reduce((a, b) =>
+    Date.parse(a.pending_prompt!.sent_at) > Date.parse(b.pending_prompt!.sent_at) ? a : b
+  );
+  return newest.id;
 }
 
 async function runCommand(cmd: string, args: string) {
@@ -422,6 +475,7 @@ async function cmdUpdate(text: string) {
       phase,
       text: message,
     });
+    active.pending_prompt = null;
     touchUserActivity(s, Date.now());
     appliedType = active.type;
     return s;
@@ -440,6 +494,7 @@ async function cmdRecovered(text: string) {
       if (inc.resolved_at !== null) continue;
       inc.resolved_at = at.toISOString();
       inc.presumed_dead = false;
+      inc.pending_prompt = null;
       inc.updates.push({
         at: new Date().toISOString(),
         phase: 'resolved',
@@ -548,6 +603,7 @@ function touchUserActivity(s: Store, now: number) {
     if (inc.resolved_at !== null) continue;
     inc.last_user_reply_at = new Date(now).toISOString();
     inc.wellness_check_sent_at = null;
+    inc.pending_prompt = null;
     if (inc.presumed_dead) {
       inc.presumed_dead = false;
       inc.updates.push({
