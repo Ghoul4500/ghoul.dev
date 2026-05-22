@@ -53,6 +53,34 @@ async function fetchJson<T>(url: string, headers: Record<string, string> = {}): 
 }
 
 /**
+ * Thin GraphQL POST to api.github.com/graphql. Throws on transport failure or
+ * on a non-empty `errors[]`. Requires GITHUB_TOKEN — GraphQL is auth-only.
+ */
+async function graphqlFetch<T>(
+  query: string,
+  variables: Record<string, unknown>
+): Promise<T> {
+  const token = getToken();
+  if (!token) throw new Error('graphql requires GITHUB_TOKEN');
+  const res = await fetch('https://api.github.com/graphql', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'User-Agent': 'ghoul.dev',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+  if (!res.ok) throw new Error(`graphql ${res.status} ${res.statusText}`);
+  const json = (await res.json()) as { data?: T; errors?: { message: string }[] };
+  if (json.errors && json.errors.length > 0) {
+    throw new Error(`graphql errors: ${json.errors.map((e) => e.message).join('; ')}`);
+  }
+  if (!json.data) throw new Error('graphql: empty data');
+  return json.data;
+}
+
+/**
  * Fetch GitHub /repos/{owner}/{repo}/contributors — returns each contributor
  * with a `contributions` field (commit count) and is served from cache, so it
  * responds immediately. We deliberately avoid the /stats/contributors variant
@@ -109,6 +137,197 @@ const USER_MATCHERS = [/ghoul/i, /yaseen/i, /93819845\+/]; // GH noreply prefix 
 function matchesUser(name: string | undefined, email: string | undefined): boolean {
   const s = `${name ?? ''} ${email ?? ''}`;
   return USER_MATCHERS.some((re) => re.test(s));
+}
+
+// ─── Contribution-org breakdown (live, per-repo commits + ±diff) ───
+/**
+ * Owners we surface on the open-source section. Order is preserved in the
+ * rendered output. Add new orgs/users here as work expands.
+ */
+const TRACKED_OWNERS = ['OpenGamingCollective', 'caelestia-dots'];
+/** How far back to scan. GraphQL's contributionsCollection caps at 1 year per
+ * window, so we step backwards in 1-year chunks. */
+const CONTRIBUTION_WINDOW_YEARS = 5;
+
+export type OrgRepoSummary = {
+  repo: string;             // bare repo name, e.g. 'linux'
+  fullName: string;         // 'OpenGamingCollective/linux'
+  url: string;
+  commits: number;
+  additions: number;
+  deletions: number;
+  /** PRs the user opened that are approved but not yet merged. */
+  approvedOpenPrs: number;
+};
+
+export type OrgBreakdown = {
+  owner: string;
+  totals: { commits: number; additions: number; deletions: number };
+  repos: OrgRepoSummary[];
+};
+
+/** User node IDs are stable; cache forever once we have one. */
+const userIdCache = new Map<string, string>();
+async function getUserNodeId(login: string): Promise<string> {
+  const hit = userIdCache.get(login);
+  if (hit) return hit;
+  const data = await graphqlFetch<{ user: { id: string } }>(
+    `query($login: String!) { user(login: $login) { id } }`,
+    { login }
+  );
+  userIdCache.set(login, data.user.id);
+  return data.user.id;
+}
+
+type ContribWindowResp = {
+  user: {
+    contributionsCollection: {
+      commitContributionsByRepository: {
+        repository: {
+          nameWithOwner: string;
+          name: string;
+          url: string;
+          owner: { login: string };
+          defaultBranchRef: {
+            target: {
+              history?: { nodes: { additions: number; deletions: number }[] };
+            };
+          } | null;
+        };
+        contributions: { totalCount: number };
+      }[];
+    };
+  };
+};
+
+const CONTRIB_WINDOW_QUERY = `
+  query($user: String!, $authorId: ID!, $from: DateTime!, $to: DateTime!) {
+    user(login: $user) {
+      contributionsCollection(from: $from, to: $to) {
+        commitContributionsByRepository(maxRepositories: 100) {
+          repository {
+            nameWithOwner
+            name
+            url
+            owner { login }
+            defaultBranchRef {
+              target {
+                ... on Commit {
+                  history(author: { id: $authorId }, since: $from, until: $to, first: 100) {
+                    nodes { additions deletions }
+                  }
+                }
+              }
+            }
+          }
+          contributions(first: 1) { totalCount }
+        }
+      }
+    }
+  }
+`;
+
+async function getContributionOrgs(user: string): Promise<OrgBreakdown[]> {
+  const authorId = await getUserNodeId(user);
+  const tracked = new Set(TRACKED_OWNERS.map((o) => o.toLowerCase()));
+
+  type Accum = { fullName: string; name: string; url: string; commits: number; additions: number; deletions: number };
+  const perRepo = new Map<string, Accum>();
+
+  const now = new Date();
+  for (let i = 0; i < CONTRIBUTION_WINDOW_YEARS; i++) {
+    const to = new Date(now);
+    to.setUTCFullYear(to.getUTCFullYear() - i);
+    const from = new Date(to);
+    from.setUTCFullYear(from.getUTCFullYear() - 1);
+
+    const data = await graphqlFetch<ContribWindowResp>(CONTRIB_WINDOW_QUERY, {
+      user,
+      authorId,
+      from: from.toISOString(),
+      to: to.toISOString(),
+    }).catch((err) => {
+      console.error('[contribution_orgs] window failed:', err?.message ?? err);
+      return null;
+    });
+    if (!data) continue;
+
+    for (const entry of data.user.contributionsCollection.commitContributionsByRepository) {
+      const ownerLogin = entry.repository.owner.login;
+      if (!tracked.has(ownerLogin.toLowerCase())) continue;
+      const key = entry.repository.nameWithOwner;
+      let bucket = perRepo.get(key);
+      if (!bucket) {
+        bucket = {
+          fullName: key,
+          name: entry.repository.name,
+          url: entry.repository.url,
+          commits: 0,
+          additions: 0,
+          deletions: 0,
+        };
+        perRepo.set(key, bucket);
+      }
+      bucket.commits += entry.contributions.totalCount;
+      const nodes = entry.repository.defaultBranchRef?.target?.history?.nodes ?? [];
+      for (const c of nodes) {
+        bucket.additions += c.additions;
+        bucket.deletions += c.deletions;
+      }
+    }
+  }
+
+  // Approved-open PRs per tracked repo: one cheap REST search each. Most repos
+  // will return 0 — the meaningful case is OGC/linux, where PRs are approved
+  // but waiting on a release branch.
+  const approvedEntries = await Promise.all(
+    [...perRepo.keys()].map(async (key) => {
+      try {
+        const r = await fetchJson<{ total_count: number }>(
+          `https://api.github.com/search/issues?q=author:${user}+is:pr+is:open+review:approved+repo:${key}&per_page=1`
+        );
+        return [key, r.total_count ?? 0] as const;
+      } catch {
+        return [key, 0] as const;
+      }
+    })
+  );
+  const approvedByRepo = new Map(approvedEntries);
+
+  const byOwner = new Map<string, OrgBreakdown>();
+  for (const [key, b] of perRepo) {
+    const owner = key.split('/')[0];
+    if (!byOwner.has(owner)) {
+      byOwner.set(owner, {
+        owner,
+        totals: { commits: 0, additions: 0, deletions: 0 },
+        repos: [],
+      });
+    }
+    const grp = byOwner.get(owner)!;
+    grp.repos.push({
+      repo: b.name,
+      fullName: b.fullName,
+      url: b.url,
+      commits: b.commits,
+      additions: b.additions,
+      deletions: b.deletions,
+      approvedOpenPrs: approvedByRepo.get(key) ?? 0,
+    });
+    grp.totals.commits += b.commits;
+    grp.totals.additions += b.additions;
+    grp.totals.deletions += b.deletions;
+  }
+
+  // Owner order follows TRACKED_OWNERS; repos within an owner sort by commits.
+  const out: OrgBreakdown[] = [];
+  for (const owner of TRACKED_OWNERS) {
+    const grp = byOwner.get(owner);
+    if (!grp) continue;
+    grp.repos.sort((a, b) => b.commits - a.commits);
+    out.push(grp);
+  }
+  return out;
 }
 
 // ─── GITHUB AUTHORSHIP ───
@@ -251,6 +470,8 @@ export type GitHubStats = {
   top_repos: { name: string; stars: number; url: string; language: string | null; description: string | null }[];
   asus_linux_mrs: number;
   ogc_prs: number;
+  /** Per-owner, per-repo contributions for the OpenSource section. */
+  contribution_orgs: OrgBreakdown[];
   total_public_prs: number;
   authenticated: boolean;
   sources: { github: boolean; gitlab: boolean };
@@ -432,6 +653,15 @@ export async function getGitHubStats(user = 'Ghoul4500'): Promise<GitHubStats> {
     ogc_prs = 1;
   }
 
+  // GraphQL-driven per-repo breakdown for the OpenSource section. Requires
+  // GITHUB_TOKEN; without it we return [] and the UI gracefully shows nothing.
+  const contribution_orgs = authenticated
+    ? await getContributionOrgs(user).catch((err) => {
+        console.error('[stats] contribution_orgs failed:', err?.message ?? err);
+        return [] as OrgBreakdown[];
+      })
+    : [];
+
   const payload: GitHubStats = {
     login: profile.login,
     name: profile.name,
@@ -443,6 +673,7 @@ export async function getGitHubStats(user = 'Ghoul4500'): Promise<GitHubStats> {
     top_repos,
     asus_linux_mrs,
     ogc_prs,
+    contribution_orgs,
     total_public_prs: prSearch.total_count ?? 0,
     authenticated,
     sources: {
