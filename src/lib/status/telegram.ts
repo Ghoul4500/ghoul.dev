@@ -5,20 +5,25 @@
  * can issue commands. Everything else is silently ignored. No HTTP write
  * surface exists on the website itself; this bot is the only control channel.
  *
- * Commands:
- *   /sick     [since=DATE] [free text]
- *   /busy     [since=DATE] [free text]
- *   /cooked   [since=DATE] [free text]
- *   /grass    [since=DATE] [free text]
- *   /update   [phase=PHASE] free text
- *   /recovered [date=DATE] [free text]
- *   /extend   2d | 12h
- *   /back
- *   /status
+ * See TELEGRAM.md for the full flow contract. Quick reference:
  *
- * Free text (no slash) is interpreted as /update on the most recent active
- * incident, unless it contains a recovery keyword (better/back/fine/done/
- * recovered/alive/alright) in which case it becomes /recovered.
+ *   /sick | /busy | /cooked | /grass   [since=DATE] [free text]
+ *   /update                            [phase=PHASE] free text
+ *   /recovered                         → close most recent active
+ *   /recovered all                     → close every active
+ *   /recovered sick|busy|cooked|grass [text]
+ *   /extend 2d | 12h
+ *   /status | /help
+ *
+ * Scheduler sends check-in and wellness DMs with inline keyboard buttons
+ * (✓ recovered / 📈 still / +Nh) and stamps a `pending_prompt` on the
+ * incident so free-text replies can also be interpreted contextually:
+ *
+ *   pending → "yes/yeah/better/ok/👍"      → close that incident
+ *   pending → "no/nope/still/not yet/👎"  → silent ack, no public update
+ *   pending → anything else                → post as /update, clear prompt
+ *   unprompted → keyword "better/back/recovered/..." → close most recent
+ *   unprompted → anything else             → post as /update
  */
 
 import { load, mutate, findMostRecentActive } from './store.ts';
@@ -599,13 +604,19 @@ async function cmdHelp() {
       '/cooked [since=DATE] [text]',
       '/grass  [since=DATE] [text]',
       '/update [phase=PHASE] text',
-      '/recovered [date=DATE] [text]',
+      '/recovered                  → close most recent',
+      '/recovered all              → close everything active',
+      '/recovered sick|busy|cooked|grass [text]',
       '/extend 2d | 12h',
-      '/back   (wipe all active)',
       '/status (show current state)',
       '',
-      'or just text — keyword "better/back/done/fine" closes,',
-      'anything else is an /update on the latest active incident.',
+      'check-in DMs come with buttons: ✓ recovered / 📈 still / +Nh.',
+      'tap one. or reply with text — when a check-in is pending, "yes/yeah/',
+      'better/back/ok/👍" closes that one incident; "no/nope/still/not yet"',
+      'is a silent ack (no public update); anything else posts as an update.',
+      '',
+      'with no pending check-in, free text posts as /update on the latest',
+      'active incident (keywords "better/back/recovered/fine" still close).',
       '',
       'DATE formats: 2026-05-18 | monday | yesterday | -3d | -12h',
     ].join('\n')
