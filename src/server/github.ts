@@ -234,12 +234,27 @@ const CONTRIB_WINDOW_QUERY = `
   }
 `;
 
-async function getContributionOrgs(user: string): Promise<OrgBreakdown[]> {
-  const authorId = await getUserNodeId(user);
-  const tracked = new Set(TRACKED_OWNERS.map((o) => o.toLowerCase()));
+/** Per-repo accumulator filled by the windowed GraphQL scan. */
+type RepoContribAccum = {
+  fullName: string;
+  name: string;
+  url: string;
+  description: string | null;
+  ownerLogin: string;
+  commits: number;
+  additions: number;
+  deletions: number;
+};
 
-  type Accum = { fullName: string; name: string; url: string; description: string | null; commits: number; additions: number; deletions: number };
-  const perRepo = new Map<string, Accum>();
+/**
+ * Single pass over CONTRIBUTION_WINDOW_YEARS of contributionsCollection,
+ * returning EVERY repo the user has commits in (no owner filter). The
+ * windowed loop is the expensive part — both `getContributionOrgs` and the
+ * language aggregator share this result.
+ */
+async function scanAllRepoContributions(user: string): Promise<RepoContribAccum[]> {
+  const authorId = await getUserNodeId(user);
+  const perRepo = new Map<string, RepoContribAccum>();
 
   const now = new Date();
   for (let i = 0; i < CONTRIBUTION_WINDOW_YEARS; i++) {
@@ -258,14 +273,12 @@ async function getContributionOrgs(user: string): Promise<OrgBreakdown[]> {
       gitFrom: fromIso,
       gitUntil: toIso,
     }).catch((err) => {
-      console.error('[contribution_orgs] window failed:', err?.message ?? err);
+      console.error('[contribution_scan] window failed:', err?.message ?? err);
       return null;
     });
     if (!data) continue;
 
     for (const entry of data.user.contributionsCollection.commitContributionsByRepository) {
-      const ownerLogin = entry.repository.owner.login;
-      if (!tracked.has(ownerLogin.toLowerCase())) continue;
       const key = entry.repository.nameWithOwner;
       let bucket = perRepo.get(key);
       if (!bucket) {
@@ -274,14 +287,13 @@ async function getContributionOrgs(user: string): Promise<OrgBreakdown[]> {
           name: entry.repository.name,
           url: entry.repository.url,
           description: entry.repository.description,
+          ownerLogin: entry.repository.owner.login,
           commits: 0,
           additions: 0,
           deletions: 0,
         };
         perRepo.set(key, bucket);
       } else if (bucket.description === null && entry.repository.description) {
-        // Description can be missing on older windows; backfill if a newer
-        // window has it.
         bucket.description = entry.repository.description;
       }
       bucket.commits += entry.contributions.totalCount;
@@ -293,47 +305,61 @@ async function getContributionOrgs(user: string): Promise<OrgBreakdown[]> {
     }
   }
 
-  // Approved-open PRs per tracked repo: one cheap REST search each. Most repos
-  // will return 0 — the meaningful case is OGC/linux, where PRs are approved
-  // but waiting on a release branch.
+  return [...perRepo.values()];
+}
+
+/**
+ * Filters the full contribution scan to TRACKED_OWNERS, groups by owner, and
+ * looks up the approved-open PR count per surfaced repo. This is the
+ * narrow, presentation-ready slice consumed by the OpenSource section.
+ */
+async function buildContributionOrgs(
+  user: string,
+  allRepos: RepoContribAccum[]
+): Promise<OrgBreakdown[]> {
+  const tracked = new Set(TRACKED_OWNERS.map((o) => o.toLowerCase()));
+  const trackedRepos = allRepos.filter((r) => tracked.has(r.ownerLogin.toLowerCase()));
+
+  // Approved-open PRs per tracked repo: one cheap REST search each. Most
+  // repos return 0 — the meaningful case is OGC/linux, where PRs are
+  // approved but waiting on a release branch.
   const approvedEntries = await Promise.all(
-    [...perRepo.keys()].map(async (key) => {
+    trackedRepos.map(async (r) => {
       try {
-        const r = await fetchJson<{ total_count: number }>(
-          `https://api.github.com/search/issues?q=author:${user}+is:pr+is:open+review:approved+repo:${key}&per_page=1`
+        const res = await fetchJson<{ total_count: number }>(
+          `https://api.github.com/search/issues?q=author:${user}+is:pr+is:open+review:approved+repo:${r.fullName}&per_page=1`
         );
-        return [key, r.total_count ?? 0] as const;
+        return [r.fullName, res.total_count ?? 0] as const;
       } catch {
-        return [key, 0] as const;
+        return [r.fullName, 0] as const;
       }
     })
   );
   const approvedByRepo = new Map(approvedEntries);
 
   const byOwner = new Map<string, OrgBreakdown>();
-  for (const [key, b] of perRepo) {
-    const owner = key.split('/')[0];
-    if (!byOwner.has(owner)) {
-      byOwner.set(owner, {
-        owner,
+  for (const r of trackedRepos) {
+    if (!byOwner.has(r.ownerLogin)) {
+      byOwner.set(r.ownerLogin, {
+        owner: r.ownerLogin,
         totals: { commits: 0, additions: 0, deletions: 0 },
         repos: [],
       });
     }
-    const grp = byOwner.get(owner)!;
+    const grp = byOwner.get(r.ownerLogin)!;
     grp.repos.push({
-      repo: b.name,
-      fullName: b.fullName,
-      url: b.url,
-      description: b.description,
-      commits: b.commits,
-      additions: b.additions,
-      deletions: b.deletions,
-      approvedOpenPrs: approvedByRepo.get(key) ?? 0,
+      repo: r.name,
+      fullName: r.fullName,
+      url: r.url,
+      description: r.description,
+      commits: r.commits,
+      additions: r.additions,
+      deletions: r.deletions,
+      approvedOpenPrs: approvedByRepo.get(r.fullName) ?? 0,
     });
-    grp.totals.commits += b.commits;
-    grp.totals.additions += b.additions;
-    grp.totals.deletions += b.deletions;
+    grp.totals.commits += r.commits;
+    grp.totals.additions += r.additions;
+    grp.totals.deletions += r.deletions;
   }
 
   // Owner order follows TRACKED_OWNERS; repos within an owner sort by commits.
@@ -348,10 +374,19 @@ async function getContributionOrgs(user: string): Promise<OrgBreakdown[]> {
 }
 
 // ─── GITHUB AUTHORSHIP ───
-async function getGitHubAuthorshipLangs(user: string): Promise<Map<string, number>> {
+/**
+ * Walk repos the user is associated with via `/user/repos` (owner /
+ * collaborator / org member) and compute per-language commit-weighted
+ * authorship. Returns `seenRepos` so the OGC contribution_orgs aggregator can
+ * skip repos already counted here.
+ */
+async function getGitHubAuthorshipLangs(
+  user: string
+): Promise<{ totals: Map<string, number>; seenRepos: Set<string> }> {
   const totals = new Map<string, number>();
+  const seenRepos = new Set<string>();
   const repos = await getAuthedRepos();
-  if (!repos) return totals;
+  if (!repos) return { totals, seenRepos };
 
   const picks = repos
     .filter((r) => !r.fork && !r.archived && r.size > 0)
@@ -378,20 +413,51 @@ async function getGitHubAuthorshipLangs(user: string): Promise<Map<string, numbe
       if (userCommits <= 0) return;
 
       // Unit = the user's commit count, distributed across this repo's
-      // languages by their share. Matches the GitLab path below so both
-      // platforms aggregate into the same unit. Using the user's commit
-      // *count* (not a bytes-weighted share) keeps a 50 MB Laravel repo
-      // from dominating just because PHP bytes are inflated by templates.
+      // languages by their share. Using the user's commit *count* (not a
+      // bytes-weighted share) keeps a 50 MB Laravel repo from dominating just
+      // because PHP bytes are inflated by templates.
       const repoBytes = Object.values(langs).reduce((a, b) => a + b, 0) || 1;
       for (const [lang, bytes] of Object.entries(langs)) {
         const langShare = bytes / repoBytes;
         totals.set(lang, (totals.get(lang) ?? 0) + userCommits * langShare);
       }
+      seenRepos.add(repo.full_name);
     } catch {
       /* swallow, skip this repo */
     }
   });
 
+  return { totals, seenRepos };
+}
+
+/**
+ * Same unit as `getGitHubAuthorshipLangs` (commits × language share), but
+ * sourced from the GraphQL contribution scan. Picks up every repo the user
+ * has commits in regardless of owner/membership — captures private client
+ * orgs (MoHE-HEMS, motcadev, etc.) and external PR-only contributions that
+ * `/user/repos` doesn't return. Skips repos already counted in the GitHub
+ * authorship pass to avoid double-attributing.
+ */
+async function getContribScanLangs(
+  repos: RepoContribAccum[],
+  skipRepos: Set<string>
+): Promise<Map<string, number>> {
+  const totals = new Map<string, number>();
+  const picks = repos.filter((r) => r.commits > 0 && !skipRepos.has(r.fullName));
+  await pool(picks, 6, async (r) => {
+    try {
+      const langs = await fetchJson<Record<string, number>>(
+        `https://api.github.com/repos/${r.fullName}/languages`
+      );
+      const repoBytes = Object.values(langs).reduce((a, b) => a + b, 0) || 1;
+      for (const [lang, bytes] of Object.entries(langs)) {
+        const langShare = bytes / repoBytes;
+        totals.set(lang, (totals.get(lang) ?? 0) + r.commits * langShare);
+      }
+    } catch {
+      /* swallow */
+    }
+  });
   return totals;
 }
 
@@ -506,13 +572,43 @@ export async function getGitHubStats(user = 'Ghoul4500'): Promise<GitHubStats> {
   );
   const authenticated = !!getToken();
 
-  // ---------- AUTHORSHIP-WEIGHTED LANGUAGES ----------
-  // "Lines I actually authored" per language, computed from per-repo
-  // contributor stats. Auth-only — public language data alone is too noisy.
-  const ghLangs = authenticated
-    ? await getGitHubAuthorshipLangs(user)
-    : new Map<string, number>();
+  // ---------- AUTHORSHIP-WEIGHTED LANGUAGES + ALL CONTRIBUTIONS ----------
+  // "Lines I actually authored" per language, summed across:
+  //   (a) repos `/user/repos` returns — owner/collab/org-member
+  //   (b) every repo the GraphQL contribution scan finds — picks up private
+  //       client orgs (MoHE-HEMS, motcadev, Hologo-World, etc.) and external
+  //       PR-only contributions that (a) systematically misses
+  // Both paths use the same unit: commits × per-language byte share.
+  // Auth-only — public language data alone is too noisy.
+  const [authorship, allContribRepos] = await Promise.all([
+    authenticated
+      ? getGitHubAuthorshipLangs(user)
+      : Promise.resolve({ totals: new Map<string, number>(), seenRepos: new Set<string>() }),
+    authenticated
+      ? scanAllRepoContributions(user).catch((err) => {
+          console.error('[stats] contribution scan failed:', err?.message ?? err);
+          return [] as RepoContribAccum[];
+        })
+      : Promise.resolve([] as RepoContribAccum[]),
+  ]);
+  const { totals: ghLangs, seenRepos } = authorship;
   const combined = new Map<string, number>(ghLangs);
+
+  if (allContribRepos.length > 0) {
+    const scanLangs = await getContribScanLangs(allContribRepos, seenRepos);
+    for (const [lang, units] of scanLangs) {
+      combined.set(lang, (combined.get(lang) ?? 0) + units);
+    }
+  }
+
+  // OpenSource section gets the TRACKED_OWNERS-filtered slice derived from
+  // the same scan — no second GraphQL pass.
+  const contribution_orgs = allContribRepos.length > 0
+    ? await buildContributionOrgs(user, allContribRepos).catch((err) => {
+        console.error('[stats] buildContributionOrgs failed:', err?.message ?? err);
+        return [] as OrgBreakdown[];
+      })
+    : [];
 
   const hasAuthorshipData = combined.size > 0;
 
@@ -562,15 +658,6 @@ export async function getGitHubStats(user = 'Ghoul4500'): Promise<GitHubStats> {
   const prSearch = await fetchJson<any>(
     `https://api.github.com/search/issues?q=author:${user}+is:pr+is:public&per_page=1`
   ).catch(() => ({ total_count: 0 }));
-
-  // GraphQL-driven per-repo breakdown for the OpenSource section. Requires
-  // GITHUB_TOKEN; without it we return [] and the UI gracefully shows nothing.
-  const contribution_orgs = authenticated
-    ? await getContributionOrgs(user).catch((err) => {
-        console.error('[stats] contribution_orgs failed:', err?.message ?? err);
-        return [] as OrgBreakdown[];
-      })
-    : [];
 
   const payload: GitHubStats = {
     login: profile.login,
