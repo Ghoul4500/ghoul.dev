@@ -153,17 +153,26 @@ export const clients: Client[] = [
 
 export type Education = {
   school: string;
+  /** Secondary school line (e.g. "UWE Bristol · Villa College") for joint programs. */
+  partnerSchool?: string;
   qualification: string;
   period: string;
-  notable?: string;
+  /** Awards / credentials earned through this entry. Rendered as sub-bullets. */
+  awards?: string[];
 };
 
 export const education: Education[] = [
   {
     school: 'UWE Bristol',
+    partnerSchool: 'Villa College',
     qualification: 'BSc (Hons) Computer Science',
     period: 'Sep 2022 — Aug 2025',
-    notable: 'First Class Honours',
+    awards: [
+      'College Medal',
+      'First Class Honours',
+      "Dean's List Diploma",
+      'Diploma in Computer Science',
+    ],
   },
   {
     school: 'Villa College',
@@ -174,16 +183,12 @@ export const education: Education[] = [
     school: 'M.Atoll School',
     qualification: 'GCE / IGCSE / SSC O Levels',
     period: '2019',
-    notable: 'National Top 7',
+    awards: ['National Top 7'],
   },
 ];
 
-export type Award = { title: string; where: string; year: string };
-
-export const awards: Award[] = [
-  { title: 'College Medal — BSc Computer Science',         where: 'UWE Bristol', year: '2025' },
-  { title: 'First Class Honours — BSc Computer Science',   where: 'UWE Bristol', year: '2025' },
-  { title: "Dean's List Diploma — BSc Computer Science",   where: 'UWE Bristol', year: '2025' },
-  { title: '2nd Place · CyberExpo CTF',                    where: 'CyberExpo',   year: '2024' },
-  { title: "National Top 7 · O'Levels",                    where: 'Maldives',    year: '2019' },
+/** Non-academic / extracurricular wins. Rendered as a small trailing row. */
+export type OtherAward = { title: string; where: string; year: string };
+export const otherAwards: OtherAward[] = [
+  { title: '2nd Place · CyberExpo CTF', where: 'CyberExpo', year: '2024' },
 ];
