@@ -151,6 +151,41 @@ export const openSource = [
   },
 ];
 
+/**
+ * Patches that don't (yet) show up via GitHub's authorship graph — kernel
+ * work in a maintainer's tree, patches sent via git-send-email, OGC PRs that
+ * land in a release branch rather than master, etc. Hand-curated; update
+ * `status` as the patch progresses upstream.
+ */
+export type ManualPatch = {
+  /** Project slug — used for grouping under an owner card. */
+  project: string;
+  /** Owner login the patch should appear under (matches TRACKED_OWNERS). */
+  owner: string;
+  subject: string;
+  /** Commit SHA — short or full. Used for display + as the link anchor. */
+  sha: string;
+  /** Where the commit currently lives (maintainer tree, lore archive, etc). */
+  treeUrl?: string;
+  patchworkUrl?: string;
+  status: 'submitted' | 'in-maintainer-tree' | 'in-linux-next' | 'in-mainline';
+  /** ISO date the patch was first sent. */
+  submittedAt: string;
+};
+
+export const manualPatches: ManualPatch[] = [
+  // Seed entries here. Example:
+  // {
+  //   project: 'linux',
+  //   owner: 'OpenGamingCollective',
+  //   subject: 'platform/x86: asus-wmi: ...',
+  //   sha: 'abc1234',
+  //   treeUrl: 'https://git.kernel.org/pub/scm/linux/kernel/git/ipilipczuk/linux-pdx86.git/commit/?id=abc1234',
+  //   status: 'in-maintainer-tree',
+  //   submittedAt: '2026-05-10',
+  // },
+];
+
 export const techStack = [
   'TypeScript', 'Rust', 'Python', 'PHP', 'Go', 'Svelte', 'React', 'React Native',
   'Node', 'Hono', 'Astro', 'Django', 'Laravel', 'Actix', 'PostgreSQL', 'Redis',
