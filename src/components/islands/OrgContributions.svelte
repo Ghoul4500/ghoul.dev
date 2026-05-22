@@ -71,6 +71,10 @@
     OpenGamingCollective: 'https://github.com/OpenGamingCollective',
     'caelestia-dots': 'https://github.com/caelestia-dots',
   };
+  const ORG_LABEL: Record<string, string> = {
+    OpenGamingCollective: 'Open Gaming Collective',
+    'caelestia-dots': 'caelestia-dots',
+  };
 
   function compact(n: number): string {
     if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
@@ -88,7 +92,7 @@
 </script>
 
 {#if orgs === null && !loadError}
-  <div class="reveal mb-6 break-inside-avoid rounded-2xl border border-white/[0.06] bg-white/[0.015] p-7 md:p-9 ring-line">
+  <div class="mb-6 break-inside-avoid rounded-2xl border border-white/[0.06] bg-white/[0.015] p-7 md:p-9 ring-line">
     <div class="h-6 w-2/3 rounded bg-white/5 animate-pulse"></div>
     <div class="mt-3 h-3 w-1/3 rounded bg-white/5 animate-pulse"></div>
     <div class="mt-8 space-y-2">
@@ -106,12 +110,12 @@
       target="_blank"
       rel="noopener noreferrer"
       data-cursor="view"
-      class="reveal mb-6 break-inside-avoid group relative overflow-hidden rounded-2xl border border-white/[0.06] hover:border-white/20 transition-colors bg-white/[0.015] p-7 md:p-9 ring-line block"
+      class="mb-6 break-inside-avoid group relative overflow-hidden rounded-2xl border border-white/[0.06] hover:border-white/20 transition-colors bg-white/[0.015] p-7 md:p-9 ring-line block"
     >
       <div class="flex items-start justify-between gap-4">
         <div>
           <h3 class="font-display text-xl md:text-2xl font-semibold tracking-[-0.01em]">
-            {owner}
+            {ORG_LABEL[owner] ?? owner}
           </h3>
           <div class="mt-1 label normal-case tracking-wider text-[var(--color-ink-dim)]">
             Contributor
@@ -181,7 +185,7 @@
   {/each}
 
   {#if loadError && ownerSet().length === 0}
-    <div class="reveal mb-6 break-inside-avoid rounded-2xl border border-white/[0.06] bg-white/[0.015] p-7 font-mono text-[12px] text-[var(--color-ink-faint)] ring-line">
+    <div class="mb-6 break-inside-avoid rounded-2xl border border-white/[0.06] bg-white/[0.015] p-7 font-mono text-[12px] text-[var(--color-ink-faint)] ring-line">
       contribution data unavailable
     </div>
   {/if}
