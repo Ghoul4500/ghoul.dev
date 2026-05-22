@@ -50,23 +50,81 @@ export function startTelegramListener() {
   });
 }
 
-export async function sendDm(text: string): Promise<void> {
+export type InlineButton = { text: string; callback_data: string };
+export type InlineKeyboard = InlineButton[][];
+
+/**
+ * Sends a DM. Returns the Telegram message_id of the sent message, or null
+ * if sending failed or no token is configured. The caller uses message_id to
+ * later edit the message (e.g. to acknowledge a button tap inline).
+ */
+export async function sendDm(
+  text: string,
+  opts: { buttons?: InlineKeyboard } = {}
+): Promise<number | null> {
   if (!BOT_TOKEN || !ALLOWED_USER_ID) {
     console.log('[status telegram] (no token) would DM:', text);
-    return;
+    return null;
   }
   try {
-    await fetch(`${API}/sendMessage`, {
+    const body: Record<string, unknown> = {
+      chat_id: ALLOWED_USER_ID,
+      text,
+      disable_web_page_preview: true,
+    };
+    if (opts.buttons && opts.buttons.length > 0) {
+      body.reply_markup = { inline_keyboard: opts.buttons };
+    }
+    const res = await fetch(`${API}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = (await res.json()) as { ok: boolean; result?: { message_id: number } };
+    return data.ok ? data.result?.message_id ?? null : null;
+  } catch (err) {
+    console.error('[status telegram] sendDm failed:', err);
+    return null;
+  }
+}
+
+/**
+ * Edits an already-sent DM in place. Used to acknowledge button taps without
+ * sending a noisy new message ("✓ marked recovered"). Silently no-ops if the
+ * edit fails (message too old, etc).
+ */
+export async function editDm(messageId: number, text: string): Promise<void> {
+  if (!BOT_TOKEN || !ALLOWED_USER_ID) return;
+  try {
+    await fetch(`${API}/editMessageText`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: ALLOWED_USER_ID,
+        message_id: messageId,
         text,
         disable_web_page_preview: true,
       }),
     });
   } catch (err) {
-    console.error('[status telegram] sendDm failed:', err);
+    console.error('[status telegram] editDm failed:', err);
+  }
+}
+
+/**
+ * Answers a callback_query so Telegram removes the spinning loader on the
+ * tapped button. Optional toast text shown briefly to the user.
+ */
+async function answerCallback(callbackId: string, text?: string): Promise<void> {
+  if (!BOT_TOKEN) return;
+  try {
+    await fetch(`${API}/answerCallbackQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callback_query_id: callbackId, text }),
+    });
+  } catch (err) {
+    console.error('[status telegram] answerCallback failed:', err);
   }
 }
 

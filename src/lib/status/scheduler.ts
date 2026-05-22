@@ -1,12 +1,51 @@
 import { load, mutate } from './store.ts';
-import { sendDm } from './telegram.ts';
+import { sendDm, type InlineKeyboard } from './telegram.ts';
 import { PRESETS } from './presets.ts';
 import { hasRecentCommits } from './github-signal.ts';
-import type { Incident } from './types.ts';
+import type { Incident, IncidentType, PendingPrompt } from './types.ts';
 
 const TICK_MS = 60_000;
 const WELLNESS_CHECK_HOURS = 96;
 const WELLNESS_CHECK_GRACE_HOURS = 24;
+
+type DmTask = {
+  text: string;
+  buttons: InlineKeyboard;
+  incidentId: string;
+  promptKind: PendingPrompt['kind'];
+};
+
+const CHECKIN_BUTTONS: Record<
+  IncidentType,
+  { recovered: string; still: string; extend: { label: string; hours: number } }
+> = {
+  sick:             { recovered: '✓ feeling better', still: '📈 still ill',    extend: { label: '+1d',  hours: 24 } },
+  busy:             { recovered: '✓ back to normal', still: '📈 still busy',   extend: { label: '+12h', hours: 12 } },
+  cooked:           { recovered: '✓ slept it off',   still: '📈 still cooked', extend: { label: '+1d',  hours: 24 } },
+  'touching-grass': { recovered: '✓ done',           still: '📈 still out',   extend: { label: '+2h',  hours: 2  } },
+};
+
+function checkinKeyboard(incidentId: string, type: IncidentType): InlineKeyboard {
+  const b = CHECKIN_BUTTONS[type];
+  return [
+    [
+      { text: b.recovered, callback_data: `recovered:${incidentId}` },
+      { text: b.still,     callback_data: `still:${incidentId}` },
+    ],
+    [
+      { text: b.extend.label, callback_data: `extend:${incidentId}:${b.extend.hours}` },
+    ],
+  ];
+}
+
+function wellnessKeyboard(incidentId: string): InlineKeyboard {
+  return [
+    [
+      { text: "✓ i'm alive",        callback_data: `recovered:${incidentId}` },
+      { text: '📈 still recovering', callback_data: `still:${incidentId}` },
+    ],
+  ];
+}
 
 let handle: ReturnType<typeof setInterval> | null = null;
 
@@ -41,7 +80,7 @@ export async function tick(now = Date.now()): Promise<void> {
     ? !(await hasRecentCommits(WELLNESS_CHECK_HOURS))
     : false;
 
-  const dmsToSend: string[] = [];
+  const dmsToSend: DmTask[] = [];
 
   await mutate(async (s) => {
     for (const inc of s.incidents) {
@@ -55,16 +94,25 @@ export async function tick(now = Date.now()): Promise<void> {
     return s;
   });
 
-  for (const dm of dmsToSend) {
+  for (const task of dmsToSend) {
     try {
-      await sendDm(dm);
+      const messageId = await sendDm(task.text, { buttons: task.buttons });
+      if (messageId !== null) {
+        await mutate(async (s) => {
+          const inc = s.incidents.find((i) => i.id === task.incidentId);
+          if (inc && inc.pending_prompt) {
+            inc.pending_prompt.dm_message_id = messageId;
+          }
+          return s;
+        });
+      }
     } catch (err) {
       console.error('[status scheduler] dm failed:', err);
     }
   }
 }
 
-function processCheckIns(inc: Incident, now: number, dms: string[]) {
+function processCheckIns(inc: Incident, now: number, dms: DmTask[]) {
   const preset = PRESETS[inc.type];
   const ageH = (now - Date.parse(inc.started_at)) / 3_600_000;
   for (let i = 0; i < preset.check_ins.length; i++) {
@@ -77,7 +125,17 @@ function processCheckIns(inc: Incident, now: number, dms: string[]) {
       text: preset.check_ins[i].page_update,
       auto: true,
     });
-    dms.push(preset.check_ins[i].dm);
+    inc.pending_prompt = {
+      kind: 'checkin',
+      sent_at: new Date(now).toISOString(),
+      dm_message_id: null,
+    };
+    dms.push({
+      text: preset.check_ins[i].dm,
+      buttons: checkinKeyboard(inc.id, inc.type),
+      incidentId: inc.id,
+      promptKind: 'checkin',
+    });
   }
 }
 
@@ -124,7 +182,7 @@ function processPresumedDead(
   inc: Incident,
   now: number,
   noRecentCommits: boolean,
-  dms: string[]
+  dms: DmTask[]
 ) {
   if (!noRecentCommits) return;
   const sinceReplyH = (now - Date.parse(inc.last_user_reply_at)) / 3_600_000;
@@ -138,10 +196,19 @@ function processPresumedDead(
       text: 'Engineering initiating final wellness check. No commits, no replies in 96h.',
       auto: true,
     });
-    dms.push(
-      'ok genuine question — u alive? no replies and no commits in 96h. ' +
-        'reply anything within 24h or status goes full RIP.'
-    );
+    inc.pending_prompt = {
+      kind: 'wellness',
+      sent_at: new Date(now).toISOString(),
+      dm_message_id: null,
+    };
+    dms.push({
+      text:
+        'ok genuine question — u alive? no replies and no commits in 96h. ' +
+        'reply anything within 24h or status goes full RIP.',
+      buttons: wellnessKeyboard(inc.id),
+      incidentId: inc.id,
+      promptKind: 'wellness',
+    });
     return;
   }
 
@@ -156,5 +223,10 @@ function processPresumedDead(
     text: 'Wellness check went unanswered. Service presumed permanently unreachable.',
     auto: true,
   });
-  dms.push('alright. RIP for now. any reply or commit will resurrect.');
+  dms.push({
+    text: 'alright. RIP for now. any reply or commit will resurrect.',
+    buttons: [],
+    incidentId: inc.id,
+    promptKind: 'wellness',
+  });
 }
