@@ -4,8 +4,8 @@
   type Stats = {
     followers: number;
     public_repos: number;
-    asus_linux_mrs: number;
     total_public_prs: number;
+    contribution_orgs: { totals: { commits: number } }[];
     languages: { name: string; pct: number }[];
     updated_at: string;
   } | null;
@@ -33,13 +33,17 @@
     '#b09f6e', '#5f6c78',
   ];
   const color = (i: number) => PALETTE[i % PALETTE.length];
+
+  const osCommits = $derived(
+    data?.contribution_orgs?.reduce((s, o) => s + (o.totals?.commits ?? 0), 0) ?? null
+  );
 </script>
 
 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
   <div class="stat">
-    <div class="label">asus-linux MRs</div>
+    <div class="label">OS commits</div>
     <div class="value">
-      {#if data}{data.asus_linux_mrs}{:else}<span class="skel"></span>{/if}
+      {#if osCommits !== null}{osCommits}{:else}<span class="skel"></span>{/if}
     </div>
   </div>
   <div class="stat">

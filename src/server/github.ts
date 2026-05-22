@@ -132,13 +132,6 @@ async function pool<T, R>(items: T[], concurrency: number, fn: (item: T, i: numb
   return results;
 }
 
-// ─── Identity matching for GitLab (contributors there are returned by name + email) ───
-const USER_MATCHERS = [/ghoul/i, /yaseen/i, /93819845\+/]; // GH noreply prefix fallback
-function matchesUser(name: string | undefined, email: string | undefined): boolean {
-  const s = `${name ?? ''} ${email ?? ''}`;
-  return USER_MATCHERS.some((re) => re.test(s));
-}
-
 // ─── Contribution-org breakdown (live, per-repo commits + ±diff) ───
 /**
  * Owners we surface on the open-source section. Order is preserved in the
@@ -378,87 +371,6 @@ async function getGitHubAuthorshipLangs(user: string): Promise<Map<string, numbe
   return totals;
 }
 
-// ─── GITLAB AUTHORSHIP ───
-async function fetchPagedGitLab<T>(baseUrl: string, maxPages = 5): Promise<T[]> {
-  const out: T[] = [];
-  for (let page = 1; page <= maxPages; page++) {
-    try {
-      const sep = baseUrl.includes('?') ? '&' : '?';
-      const batch = await fetchJson<T[]>(`${baseUrl}${sep}page=${page}&per_page=100`);
-      if (!Array.isArray(batch) || batch.length === 0) break;
-      out.push(...batch);
-      if (batch.length < 100) break;
-    } catch {
-      break;
-    }
-  }
-  return out;
-}
-
-async function listGitLabProjects(user: string): Promise<any[]> {
-  const [userProjects, asusProjects] = await Promise.all([
-    fetchPagedGitLab<any>(
-      `https://gitlab.com/api/v4/users/${user}/projects?archived=false`
-    ),
-    fetchPagedGitLab<any>(
-      `https://gitlab.com/api/v4/groups/asus-linux/projects?archived=false&include_subgroups=true`
-    ),
-  ]);
-  const seen = new Set<number>();
-  return [...userProjects, ...asusProjects].filter((p) => {
-    if (!p || seen.has(p.id)) return false;
-    seen.add(p.id);
-    return true;
-  });
-}
-
-async function getGitLabAuthorshipLangs(user: string): Promise<Map<string, number>> {
-  const totals = new Map<string, number>();
-  const projects = await listGitLabProjects(user);
-  if (projects.length === 0) return totals;
-
-  await pool(projects, 4, async (p) => {
-    try {
-      const [contributors, langs] = await Promise.all([
-        // Paginate to find the user — large projects (e.g. asus-linux/asusctl)
-        // push the user past page 1.
-        fetchPagedGitLab<any>(
-          `https://gitlab.com/api/v4/projects/${p.id}/repository/contributors`,
-          4
-        ),
-        fetchJson<Record<string, number>>(
-          `https://gitlab.com/api/v4/projects/${p.id}/languages`
-        ).catch(() => null),
-      ]);
-      if (!contributors || contributors.length === 0 || !langs) return;
-
-      // The user may appear under multiple names/emails in one project
-      // (e.g. "Ghoul" and "Ahmed Yaseen" both surface in asus-linux/asusctl).
-      // Sum them all for a fair authorship signal.
-      const userEntries = contributors.filter((c: any) => matchesUser(c.name, c.email));
-      if (userEntries.length === 0) return;
-
-      const userCommits = userEntries.reduce(
-        (s: number, c: any) => s + (c.commits ?? 0),
-        0
-      );
-      if (userCommits <= 0) return;
-
-      // Same unit as GitHub path: the user's commit count distributed across
-      // the project's language shares. `/languages` returns percentages
-      // summing to 100, so langShare = pct/100 is the direct share.
-      for (const [lang, pct] of Object.entries(langs)) {
-        const langShare = (pct as number) / 100;
-        totals.set(lang, (totals.get(lang) ?? 0) + userCommits * langShare);
-      }
-    } catch {
-      /* swallow, skip this project */
-    }
-  });
-
-  return totals;
-}
-
 export type GitHubStats = {
   login: string;
   name: string | null;
@@ -468,13 +380,10 @@ export type GitHubStats = {
   location: string | null;
   languages: { name: string; bytes: number; pct: number }[];
   top_repos: { name: string; stars: number; url: string; language: string | null; description: string | null }[];
-  asus_linux_mrs: number;
-  ogc_prs: number;
   /** Per-owner, per-repo contributions for the OpenSource section. */
   contribution_orgs: OrgBreakdown[];
   total_public_prs: number;
   authenticated: boolean;
-  sources: { github: boolean; gitlab: boolean };
   updated_at: string;
 };
 
@@ -574,15 +483,12 @@ export async function getGitHubStats(user = 'Ghoul4500'): Promise<GitHubStats> {
   const authenticated = !!getToken();
 
   // ---------- AUTHORSHIP-WEIGHTED LANGUAGES ----------
-  // Computes "lines I actually authored" per language, aggregating across
-  // GitHub (authed) and GitLab (public) using per-repo contributor stats.
-  const [ghLangs, glLangs] = await Promise.all([
-    authenticated ? getGitHubAuthorshipLangs(user) : Promise.resolve(new Map<string, number>()),
-    getGitLabAuthorshipLangs(user),
-  ]);
-  const combined = new Map<string, number>();
-  for (const [k, v] of ghLangs) combined.set(k, (combined.get(k) ?? 0) + v);
-  for (const [k, v] of glLangs) combined.set(k, (combined.get(k) ?? 0) + v);
+  // "Lines I actually authored" per language, computed from per-repo
+  // contributor stats. Auth-only — public language data alone is too noisy.
+  const ghLangs = authenticated
+    ? await getGitHubAuthorshipLangs(user)
+    : new Map<string, number>();
+  const combined = new Map<string, number>(ghLangs);
 
   const hasAuthorshipData = combined.size > 0;
 
@@ -633,26 +539,6 @@ export async function getGitHubStats(user = 'Ghoul4500'): Promise<GitHubStats> {
     `https://api.github.com/search/issues?q=author:${user}+is:pr+is:public&per_page=1`
   ).catch(() => ({ total_count: 0 }));
 
-  let asus_linux_mrs = 0;
-  try {
-    const mrs = await fetchJson<any[]>(
-      `https://gitlab.com/api/v4/groups/asus-linux/merge_requests?author_username=${user}&scope=all&state=merged&per_page=100`
-    );
-    asus_linux_mrs = mrs.length;
-  } catch {
-    asus_linux_mrs = 7;
-  }
-
-  let ogc_prs = 0;
-  try {
-    const ogc = await fetchJson<any>(
-      `https://api.github.com/search/issues?q=author:${user}+is:pr+is:public+org:OpenGamingCollective&per_page=1`
-    );
-    ogc_prs = ogc.total_count ?? 0;
-  } catch {
-    ogc_prs = 1;
-  }
-
   // GraphQL-driven per-repo breakdown for the OpenSource section. Requires
   // GITHUB_TOKEN; without it we return [] and the UI gracefully shows nothing.
   const contribution_orgs = authenticated
@@ -671,15 +557,9 @@ export async function getGitHubStats(user = 'Ghoul4500'): Promise<GitHubStats> {
     location: profile.location,
     languages,
     top_repos,
-    asus_linux_mrs,
-    ogc_prs,
     contribution_orgs,
     total_public_prs: prSearch.total_count ?? 0,
     authenticated,
-    sources: {
-      github: ghLangs.size > 0 || !authenticated,
-      gitlab: glLangs.size > 0,
-    },
     updated_at: new Date().toISOString(),
   };
 
