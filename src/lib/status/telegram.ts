@@ -399,7 +399,6 @@ async function runCommand(cmd: string, args: string) {
     case 'update':    return cmdUpdate(args);
     case 'recovered': return cmdRecovered(args);
     case 'extend':    return cmdExtend(args);
-    case 'back':      return cmdBack();
     case 'status':    return cmdStatus();
     case 'help':      return cmdHelp();
     case 'start':     return cmdHelp();
@@ -483,15 +482,34 @@ async function cmdUpdate(text: string) {
   await sendDm(`✓ update added to ${appliedType} incident`);
 }
 
+/**
+ * /recovered                  → close the most recent active incident
+ * /recovered all              → close every active incident
+ * /recovered sick|busy|cooked|grass [text]
+ *                             → close one specific type
+ * Any form also accepts date=YYYY-MM-DD and trailing free text for the
+ * resolved-update message.
+ */
 async function cmdRecovered(text: string) {
   const { tokens, rest } = extractTokens(text, ['date']);
   const at = tokens.date ? parseDate(tokens.date) : new Date();
-  const message = rest.trim();
+
+  const { target, message } = parseRecoveredTarget(rest);
 
   let count = 0;
   await mutate(async (s) => {
-    for (const inc of s.incidents) {
-      if (inc.resolved_at !== null) continue;
+    let toClose: Incident[] = [];
+    if (target === 'all') {
+      toClose = s.incidents.filter((i) => i.resolved_at === null);
+    } else if (target === 'most-recent') {
+      const most = findMostRecentActive(s);
+      if (most) toClose = [most];
+    } else {
+      const inc = s.incidents.find((i) => i.resolved_at === null && i.type === target);
+      if (inc) toClose = [inc];
+    }
+
+    for (const inc of toClose) {
       inc.resolved_at = at.toISOString();
       inc.presumed_dead = false;
       inc.pending_prompt = null;
@@ -505,7 +523,24 @@ async function cmdRecovered(text: string) {
     touchUserActivity(s, Date.now());
     return s;
   });
-  await sendDm(count > 0 ? `✓ ${count} incident(s) resolved` : 'nothing was active');
+  await sendDm(count > 0 ? `✓ ${count} incident(s) resolved` : 'nothing matched');
+}
+
+function parseRecoveredTarget(
+  rest: string
+): { target: 'most-recent' | 'all' | IncidentType; message: string } {
+  const trimmed = rest.trim();
+  if (!trimmed) return { target: 'most-recent', message: '' };
+  const space = trimmed.indexOf(' ');
+  const first = (space === -1 ? trimmed : trimmed.slice(0, space)).toLowerCase();
+  const tail = space === -1 ? '' : trimmed.slice(space + 1).trim();
+
+  if (first === 'all') return { target: 'all', message: tail };
+  const normalized = first === 'grass' ? 'touching-grass' : first;
+  if (isIncidentType(normalized)) {
+    return { target: normalized as IncidentType, message: tail };
+  }
+  return { target: 'most-recent', message: trimmed };
 }
 
 async function cmdExtend(args: string) {
@@ -530,25 +565,6 @@ async function cmdExtend(args: string) {
     return s;
   });
   await sendDm(`✓ ${affected} incident extended by ${hours}h`);
-}
-
-async function cmdBack() {
-  let count = 0;
-  await mutate(async (s) => {
-    for (const inc of s.incidents) {
-      if (inc.resolved_at !== null) continue;
-      inc.resolved_at = new Date().toISOString();
-      inc.presumed_dead = false;
-      inc.updates.push({
-        at: new Date().toISOString(),
-        phase: 'resolved',
-        text: 'Emergency clear. All services back.',
-      });
-      count++;
-    }
-    return s;
-  });
-  await sendDm(count > 0 ? `✓ ${count} incident(s) wiped` : 'nothing to wipe');
 }
 
 async function cmdStatus() {
