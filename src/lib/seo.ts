@@ -1,5 +1,5 @@
 import { experience } from './experience.ts';
-import { projects, openSource } from './projects.ts';
+import { projects, trackedOrgs } from './projects.ts';
 import { clients } from './clients.ts';
 
 export const SITE = {
@@ -27,7 +27,7 @@ export const PERSON = {
   email: 'yaseen@ghoul.dev',
   jobTitle: 'Full-stack Engineer',
   description:
-    "Full-stack engineer from the Maldives. Engineer at OXIQA, founder of Zenryk, collaborator with Synetecs and iqdot. Upstream contributor to the asus-linux project and the Open Gaming Collective (OGC). Works in TypeScript, Rust, Python, PHP, Go.",
+    "Full-stack engineer from the Maldives. Engineer at OXIQA, founder of Zenryk, collaborator with Synetecs and iqdot. Upstream contributor to the Open Gaming Collective (OGC) and caelestia-dots. Works in TypeScript, Rust, Python, PHP, Go.",
   address: {
     country: 'Maldives',
     countryCode: 'MV',
@@ -47,7 +47,7 @@ export const PERSON = {
     'Docker', 'Nginx', 'Ansible',
     'WordPress', 'Divi',
     'AI', 'NLP', 'Machine Learning',
-    'Open source', 'asus-linux', 'Open Gaming Collective',
+    'Open source', 'Open Gaming Collective', 'caelestia-dots', 'asus-linux',
   ],
 } as const;
 
@@ -55,7 +55,7 @@ export const PERSON = {
 export const DEFAULT_TITLE = `${PERSON.fullName} (Ghoul) — Full-stack Engineer · ${SITE.name}`;
 export const DEFAULT_DESCRIPTION =
   `${PERSON.fullName} (Ghoul) — full-stack engineer in the Maldives. ` +
-  `Engineer at OXIQA, founder of Zenryk. Contributor to asus-linux and Open Gaming Collective.`;
+  `Engineer at OXIQA, founder of Zenryk. Contributor to Open Gaming Collective and caelestia-dots.`;
 
 // Comma-separated keyword string. Engines that still use this tag will pick up names,
 // usernames, orgs, projects and clients automatically from the source-of-truth lib files.
@@ -67,7 +67,7 @@ export function buildKeywords(): string {
     // c.through can be a single org or a "Synetecs × OXIQA" chain. Split it.
     if (c.through) for (const t of c.through.split('×')) orgs.add(t.trim());
   }
-  for (const o of openSource) orgs.add(o.org);
+  for (const o of trackedOrgs) orgs.add(o.org);
 
   const seen = new Set<string>();
   const out: string[] = [];
@@ -103,7 +103,7 @@ export function buildJsonLd(canonicalUrl: string): object {
   for (const r of experience) {
     if (!orgs.has(r.company)) orgs.set(r.company, { name: r.company, url: r.url });
   }
-  for (const o of openSource) {
+  for (const o of trackedOrgs) {
     if (!orgs.has(o.org)) orgs.set(o.org, { name: o.org, url: o.url });
   }
 

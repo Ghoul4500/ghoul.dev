@@ -126,28 +126,23 @@ export const projects: Project[] = [
   },
 ];
 
-export const openSource = [
-  {
-    org: 'asus-linux',
-    role: 'Rust · Linux hardware support',
-    prs: 7,
-    url: 'https://gitlab.com/groups/asus-linux/-/merge_requests?scope=all&state=merged&author_username=Ghoul4500',
-    notable: [
-      'Strix Scar 18 2025 (G835LW) support',
-      'AniMe Matrix image + GIF pipeline for Scar 2025',
-      'Fixed race conditions in PPT power tuning',
-      'GA402N board support, pulse-mode aura',
-    ],
-  },
+/**
+ * Owners surfaced in the OpenSource section. The runtime fetcher
+ * (src/server/github.ts) is the source of truth for live commit/diff counts;
+ * this list exists so static consumers (SEO, JSON-LD) have a stable handle
+ * on the same orgs without depending on a runtime fetch.
+ */
+export type TrackedOrg = { org: string; url: string; role: string };
+export const trackedOrgs: TrackedOrg[] = [
   {
     org: 'Open Gaming Collective',
-    role: 'Contributor',
-    prs: 1,
     url: 'https://github.com/OpenGamingCollective',
-    notable: [
-      'Web contributions to opengamingcollective.org',
-      'Some kernel-level work in progress',
-    ],
+    role: 'Contributor · Linux + tooling',
+  },
+  {
+    org: 'caelestia-dots',
+    url: 'https://github.com/caelestia-dots',
+    role: 'Contributor',
   },
 ];
 
