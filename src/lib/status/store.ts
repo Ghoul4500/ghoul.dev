@@ -12,10 +12,18 @@ export async function load(): Promise<Store> {
   try {
     const txt = await readFile(STORE_FILE, 'utf-8');
     const parsed = JSON.parse(txt) as Partial<Store>;
-    return { incidents: parsed.incidents ?? [] };
+    const incidents = (parsed.incidents ?? []).map(normalize);
+    return { incidents };
   } catch {
     return { incidents: [] };
   }
+}
+
+function normalize(raw: any): Incident {
+  return {
+    ...raw,
+    pending_prompt: raw.pending_prompt ?? null,
+  };
 }
 
 function pruneOld(store: Store, now: number): Store {

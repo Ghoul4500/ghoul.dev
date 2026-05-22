@@ -195,6 +195,7 @@ async function cmdStart(type: IncidentType, args: string) {
         },
       ],
       last_user_reply_at: now.toISOString(),
+      pending_prompt: null,
     };
     s.incidents.push(inc);
     return s;

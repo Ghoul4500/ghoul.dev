@@ -56,6 +56,20 @@ export type Incident = {
   impact: Partial<Record<ComponentId, Severity>>;
   updates: IncidentUpdate[];
   last_user_reply_at: string;
+  /**
+   * Set when the bot DMs the user a question (check-in or wellness). The next
+   * reply is interpreted in this context — affirmative closes the incident,
+   * negative is a silent ack, anything else becomes a public update. Cleared
+   * once consumed or after PENDING_PROMPT_TTL_HOURS elapses.
+   */
+  pending_prompt: PendingPrompt | null;
+};
+
+export type PendingPrompt = {
+  kind: 'checkin' | 'wellness';
+  sent_at: string;
+  /** Telegram message_id of the question DM, so we can edit it on reply. */
+  dm_message_id: number | null;
 };
 
 export type CheckIn = {
