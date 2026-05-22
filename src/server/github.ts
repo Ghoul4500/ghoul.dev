@@ -193,8 +193,19 @@ type ContribWindowResp = {
   };
 };
 
+// $from / $to feed contributionsCollection (DateTime!).
+// $gitFrom / $gitUntil feed Commit.history (GitTimestamp). Same ISO values,
+// different GraphQL scalars — GitHub's schema doesn't accept DateTime where
+// GitTimestamp is expected.
 const CONTRIB_WINDOW_QUERY = `
-  query($user: String!, $authorId: ID!, $from: DateTime!, $to: DateTime!) {
+  query(
+    $user: String!
+    $authorId: ID!
+    $from: DateTime!
+    $to: DateTime!
+    $gitFrom: GitTimestamp!
+    $gitUntil: GitTimestamp!
+  ) {
     user(login: $user) {
       contributionsCollection(from: $from, to: $to) {
         commitContributionsByRepository(maxRepositories: 100) {
@@ -206,7 +217,7 @@ const CONTRIB_WINDOW_QUERY = `
             defaultBranchRef {
               target {
                 ... on Commit {
-                  history(author: { id: $authorId }, since: $from, until: $to, first: 100) {
+                  history(author: { id: $authorId }, since: $gitFrom, until: $gitUntil, first: 100) {
                     nodes { additions deletions }
                   }
                 }
@@ -234,11 +245,15 @@ async function getContributionOrgs(user: string): Promise<OrgBreakdown[]> {
     const from = new Date(to);
     from.setUTCFullYear(from.getUTCFullYear() - 1);
 
+    const fromIso = from.toISOString();
+    const toIso = to.toISOString();
     const data = await graphqlFetch<ContribWindowResp>(CONTRIB_WINDOW_QUERY, {
       user,
       authorId,
-      from: from.toISOString(),
-      to: to.toISOString(),
+      from: fromIso,
+      to: toIso,
+      gitFrom: fromIso,
+      gitUntil: toIso,
     }).catch((err) => {
       console.error('[contribution_orgs] window failed:', err?.message ?? err);
       return null;
