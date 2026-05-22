@@ -33,17 +33,12 @@
   body {
     min-height: 100svh;
     overflow-x: hidden;
-    cursor: none;
-  }
-  @media (hover: none) {
-    body { cursor: auto; }
   }
   ::selection {
     background: var(--color-acid);
     color: var(--color-bg);
   }
   a { color: inherit; text-decoration: none; }
-  button { cursor: none; }
   h1, h2, h3, h4 {
     font-family: var(--font-display);
     letter-spacing: -0.01em;

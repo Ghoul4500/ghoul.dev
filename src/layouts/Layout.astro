@@ -1,6 +1,5 @@
 ---
 import '../styles/global.css';
-import Cursor from '../components/islands/Cursor.svelte';
 import ShaderBg from '../components/islands/ShaderBg.svelte';
 import {
   SITE,
@@ -88,7 +87,6 @@ const jsonLd = buildJsonLd(canonical);
   </head>
   <body>
     <ShaderBg client:load />
-    <Cursor client:load />
 
     <a href="#main" class="sr-only">Skip to content</a>
 
