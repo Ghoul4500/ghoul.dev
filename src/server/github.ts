@@ -146,6 +146,7 @@ export type OrgRepoSummary = {
   repo: string;             // bare repo name, e.g. 'linux'
   fullName: string;         // 'OpenGamingCollective/linux'
   url: string;
+  description: string | null;
   commits: number;
   additions: number;
   deletions: number;
@@ -180,6 +181,7 @@ type ContribWindowResp = {
           nameWithOwner: string;
           name: string;
           url: string;
+          description: string | null;
           owner: { login: string };
           defaultBranchRef: {
             target: {
@@ -213,6 +215,7 @@ const CONTRIB_WINDOW_QUERY = `
             nameWithOwner
             name
             url
+            description
             owner { login }
             defaultBranchRef {
               target {
@@ -235,7 +238,7 @@ async function getContributionOrgs(user: string): Promise<OrgBreakdown[]> {
   const authorId = await getUserNodeId(user);
   const tracked = new Set(TRACKED_OWNERS.map((o) => o.toLowerCase()));
 
-  type Accum = { fullName: string; name: string; url: string; commits: number; additions: number; deletions: number };
+  type Accum = { fullName: string; name: string; url: string; description: string | null; commits: number; additions: number; deletions: number };
   const perRepo = new Map<string, Accum>();
 
   const now = new Date();
@@ -270,11 +273,16 @@ async function getContributionOrgs(user: string): Promise<OrgBreakdown[]> {
           fullName: key,
           name: entry.repository.name,
           url: entry.repository.url,
+          description: entry.repository.description,
           commits: 0,
           additions: 0,
           deletions: 0,
         };
         perRepo.set(key, bucket);
+      } else if (bucket.description === null && entry.repository.description) {
+        // Description can be missing on older windows; backfill if a newer
+        // window has it.
+        bucket.description = entry.repository.description;
       }
       bucket.commits += entry.contributions.totalCount;
       const nodes = entry.repository.defaultBranchRef?.target?.history?.nodes ?? [];
@@ -317,6 +325,7 @@ async function getContributionOrgs(user: string): Promise<OrgBreakdown[]> {
       repo: b.name,
       fullName: b.fullName,
       url: b.url,
+      description: b.description,
       commits: b.commits,
       additions: b.additions,
       deletions: b.deletions,
