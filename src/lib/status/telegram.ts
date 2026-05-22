@@ -130,10 +130,11 @@ async function answerCallback(callbackId: string, text?: string): Promise<void> 
 
 async function pollLoop() {
   let offset = 0;
+  const allowed = encodeURIComponent(JSON.stringify(['message', 'callback_query']));
   while (listening) {
     try {
       const res = await fetch(
-        `${API}/getUpdates?offset=${offset}&timeout=30`,
+        `${API}/getUpdates?offset=${offset}&timeout=30&allowed_updates=${allowed}`,
         { signal: AbortSignal.timeout(35_000) }
       );
       if (!res.ok) {
@@ -169,9 +170,26 @@ type TelegramUpdate = {
     from?: { id: number };
     chat?: { id: number };
   };
+  callback_query?: {
+    id: string;
+    from: { id: number };
+    data?: string;
+    message?: { message_id: number; text?: string };
+  };
 };
 
 async function handleUpdate(update: TelegramUpdate) {
+  if (update.callback_query) {
+    const cq = update.callback_query;
+    if (String(cq.from.id) !== String(ALLOWED_USER_ID)) return;
+    try {
+      await handleCallback(cq);
+    } catch (err: any) {
+      await answerCallback(cq.id, `✗ ${err?.message ?? String(err)}`);
+    }
+    return;
+  }
+
   const msg = update.message;
   if (!msg || !msg.text) return;
   const fromId = String(msg.from?.id ?? '');
@@ -182,6 +200,128 @@ async function handleUpdate(update: TelegramUpdate) {
   } catch (err: any) {
     await sendDm(`✗ ${err?.message ?? String(err)}`);
   }
+}
+
+async function handleCallback(cq: NonNullable<TelegramUpdate['callback_query']>) {
+  const data = cq.data ?? '';
+  const messageId = cq.message?.message_id ?? null;
+  const originalText = cq.message?.text ?? '';
+
+  const [action, incidentId, arg] = data.split(':');
+  if (!action || !incidentId) {
+    await answerCallback(cq.id, 'bad button payload');
+    return;
+  }
+
+  if (action === 'recovered') {
+    const result = await recoverIncident(incidentId);
+    await answerCallback(cq.id, result.ok ? '✓ marked recovered' : result.reason);
+    if (messageId && result.ok) {
+      await editDm(messageId, `${originalText}\n\n→ ✓ marked recovered`);
+    }
+    return;
+  }
+
+  if (action === 'still') {
+    const result = await ackStillCooked(incidentId);
+    await answerCallback(cq.id, result.ok ? '✓ noted, checking back later' : result.reason);
+    if (messageId && result.ok) {
+      await editDm(messageId, `${originalText}\n\n→ 📈 still cooked, noted`);
+    }
+    return;
+  }
+
+  if (action === 'extend') {
+    const hours = parseInt(arg ?? '', 10);
+    if (!Number.isFinite(hours) || hours <= 0) {
+      await answerCallback(cq.id, 'bad extend payload');
+      return;
+    }
+    const result = await extendIncident(incidentId, hours);
+    await answerCallback(cq.id, result.ok ? `✓ extended +${hours}h` : result.reason);
+    if (messageId && result.ok) {
+      await editDm(messageId, `${originalText}\n\n→ ⏱ window extended +${hours}h`);
+    }
+    return;
+  }
+
+  await answerCallback(cq.id, `unknown action: ${action}`);
+}
+
+type ActionResult = { ok: true } | { ok: false; reason: string };
+
+async function recoverIncident(incidentId: string): Promise<ActionResult> {
+  let outcome: ActionResult = { ok: false, reason: 'incident not found' };
+  await mutate(async (s) => {
+    const inc = s.incidents.find((i) => i.id === incidentId);
+    if (!inc) return s;
+    if (inc.resolved_at !== null) {
+      outcome = { ok: false, reason: 'already resolved' };
+      return s;
+    }
+    inc.resolved_at = new Date().toISOString();
+    inc.presumed_dead = false;
+    inc.pending_prompt = null;
+    inc.last_user_reply_at = new Date().toISOString();
+    inc.wellness_check_sent_at = null;
+    inc.updates.push({
+      at: new Date().toISOString(),
+      phase: 'resolved',
+      text: 'User has returned. Cause of life unknown.',
+    });
+    outcome = { ok: true };
+    return s;
+  });
+  return outcome;
+}
+
+/**
+ * "Still cooked" ack: clears the pending prompt and counts as user activity
+ * (so the wellness-check countdown resets), but writes nothing to the public
+ * timeline. The user has answered the question — no need to broadcast that
+ * they're still ill.
+ */
+async function ackStillCooked(incidentId: string): Promise<ActionResult> {
+  let outcome: ActionResult = { ok: false, reason: 'incident not found' };
+  await mutate(async (s) => {
+    const inc = s.incidents.find((i) => i.id === incidentId);
+    if (!inc) return s;
+    if (inc.resolved_at !== null) {
+      outcome = { ok: false, reason: 'already resolved' };
+      return s;
+    }
+    inc.pending_prompt = null;
+    inc.last_user_reply_at = new Date().toISOString();
+    inc.wellness_check_sent_at = null;
+    outcome = { ok: true };
+    return s;
+  });
+  return outcome;
+}
+
+async function extendIncident(incidentId: string, hours: number): Promise<ActionResult> {
+  let outcome: ActionResult = { ok: false, reason: 'incident not found' };
+  await mutate(async (s) => {
+    const inc = s.incidents.find((i) => i.id === incidentId);
+    if (!inc) return s;
+    if (inc.resolved_at !== null) {
+      outcome = { ok: false, reason: 'already resolved' };
+      return s;
+    }
+    inc.auto_resolve_offset_hours += hours;
+    inc.presumed_recovered = false;
+    inc.pending_prompt = null;
+    inc.last_user_reply_at = new Date().toISOString();
+    inc.wellness_check_sent_at = null;
+    inc.updates.push({
+      at: new Date().toISOString(),
+      phase: 'monitoring',
+      text: `Window extended by ${hours}h. Still in progress.`,
+    });
+    outcome = { ok: true };
+    return s;
+  });
+  return outcome;
 }
 
 async function dispatch(text: string) {
