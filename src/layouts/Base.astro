@@ -48,7 +48,7 @@ const ogImage = new URL(image, SITE.url).href;
     {keywords && <meta name="keywords" content={keywords} />}
     <link rel="canonical" href={canonical} />
     <meta name="author" content={SITE.author} />
-    <meta name="theme-color" content="#262521" />
+    <meta name="theme-color" content="#16150f" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta
       http-equiv="Content-Security-Policy"
@@ -63,6 +63,8 @@ const ogImage = new URL(image, SITE.url).href;
     <meta property="og:site_name" content={SITE.name} />
     <meta property="og:locale" content={SITE.locale} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content={title} />
     {published && <meta property="article:published_time" content={published} />}
     {modified && <meta property="article:modified_time" content={modified} />}
@@ -76,6 +78,7 @@ const ogImage = new URL(image, SITE.url).href;
     <meta name="twitter:image" content={ogImage} />
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate" type="application/rss+xml" title="ghoul.dev — Writing" href="/rss.xml" />
     <!-- Preload the two above-the-fold faces: hero headline + mono UI/terminal. -->
     <link rel="preload" href="/fonts/space-grotesk-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/jetbrains-mono-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />

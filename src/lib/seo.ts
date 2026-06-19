@@ -42,7 +42,6 @@ export function personJsonLd(): object {
       'https://github.com/Ghoul4500',
       'https://gitlab.com/Ghoul4500',
       'https://pypi.org/user/Ghoul4500/',
-      'https://zenryk.com',
     ],
   };
 }
