@@ -33,6 +33,30 @@ try {
   /* keep fallback */
 }
 
+// asusctl commits authored by Ghoul4500 on the OGC repo, counted at build time
+// (frontmatter runs only during `astro build`, never client-side). Fallback 18.
+let asusctlCommits = 18;
+try {
+  const token = process.env.GITHUB_TOKEN;
+  const res = await fetch(
+    'https://api.github.com/repos/OpenGamingCollective/asusctl/commits?author=Ghoul4500&per_page=100',
+    {
+      headers: {
+        'User-Agent': 'ghoul.dev-build',
+        Accept: 'application/vnd.github+json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      signal: AbortSignal.timeout(5000),
+    },
+  );
+  if (res.ok) {
+    const commits = await res.json();
+    if (Array.isArray(commits) && commits.length) asusctlCommits = commits.length;
+  }
+} catch {
+  /* keep fallback */
+}
+
 const tech = [
   'Rust', 'C', 'TypeScript', 'Go', 'PHP · Laravel', 'Python', 'Linux', 'PostgreSQL', 'Docker',
 ];
@@ -217,7 +241,7 @@ const lane = [...tech, ...tech, ...tech];
     <div class="subhead">Personal &amp; open-source projects</div>
     <div class="proj-grid">
       <a href="https://github.com/OpenGamingCollective/asusctl/commits?author=Ghoul4500" target="_blank" rel="noopener" class="proj">
-        <div class="proj-eyebrow"><span class="lang lang-rust"></span><span class="lbl">Rust · 18 commits upstream</span></div>
+        <div class="proj-eyebrow"><span class="lang lang-rust"></span><span class="lbl">Rust · {asusctlCommits} commits upstream</span></div>
         <h4>asusctl</h4>
         <p>The Rust daemon that makes ASUS ROG laptops work on Linux. I added Scar 18 2025 support, rebuilt the AniMe Matrix image/GIF pipeline, and fixed PPT power-tuning races.</p>
         <span class="visually-hidden">(opens in a new tab)</span>
@@ -287,7 +311,7 @@ const lane = [...tech, ...tech, ...tech];
     </div>
     <div class="stat-grid">
       <div class="stat"><div class="n">1</div><div class="l">patch in the mainline kernel</div></div>
-      <div class="stat"><div class="n">18</div><div class="l">commits in asusctl</div></div>
+      <div class="stat"><div class="n">{asusctlCommits}</div><div class="l">commits in asusctl</div></div>
       <div class="stat"><div class="n">{repoCount}</div><div class="l">public repositories</div></div>
       <div class="stat"><div class="n">2021</div><div class="l">shipping since</div></div>
     </div>
