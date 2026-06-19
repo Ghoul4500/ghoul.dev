@@ -74,6 +74,10 @@ img { max-width: 100%; display: block; }
 /* Visible keyboard focus for all interactive elements. */
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 
+/* Offset in-page anchor jumps so the target clears the sticky nav (~72px) instead
+   of landing hidden underneath it — footnote refs/defs, heading links, homepage sections. */
+:where([id]) { scroll-margin-top: 88px; }
+
 /* Skip-to-content link — visible only when focused. */
 .skip-link {
   position: fixed; top: 8px; left: 8px; z-index: 100; transform: translateY(-160%);
