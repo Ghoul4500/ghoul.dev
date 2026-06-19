@@ -12,7 +12,7 @@ const posts = (await getCollection('blog'))
 // Live public-repo count at build time so the stat can't silently rot.
 // Falls back to last-known value if the API is unreachable/rate-limited/slow.
 // In CI, GITHUB_TOKEN lifts the 60 req/hr unauthenticated limit on shared IPs.
-let repoCount = 16;
+let repoCount = 10;
 try {
   const token = process.env.GITHUB_TOKEN;
   const res = await fetch('https://api.github.com/users/Ghoul4500/repos?per_page=100&type=public', {
@@ -161,7 +161,7 @@ const lane = [...tech, ...tech, ...tech];
         <div class="meta">Full-stack developer · 2023—2025</div>
         <p>The country's most-used ride-hailing app. I was one of its engineers, working across the rider and driver apps, the web APIs, and the ops admin panel, through launch and the months after.</p>
         <div class="tags"><span class="tag">Mobile</span><span class="tag">REST APIs</span><span class="tag">Admin</span></div>
-        <a href="https://play.google.com/store/apps/details?id=app.avas.rider" target="_blank" rel="noopener" class="proof mono">50K+ on Google Play ↗</a>
+        <a href="https://play.google.com/store/apps/details?id=app.avas.rider" target="_blank" rel="noopener" class="proof mono">50K+ on Google Play <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
       </div>
       <div class="card">
         <div class="card-head"><h3>Hologo</h3><span class="pill">PRODUCT</span></div>
@@ -222,9 +222,9 @@ const lane = [...tech, ...tech, ...tech];
           <p>I write C for the kernel's ASUS laptop drivers. My fix for mini-LED handling on 2024+ ASUS hardware (the firmware mapping was wrong, so writes failed) was merged by the platform-driver-x86 maintainer into Linus' mainline tree. Two more are in review on the mailing lists: one gates PPT power writes behind the active fan curve; a usbhid change skips interrupt polling on devices with no input reports.</p>
           <div class="tags"><span class="tag">C</span><span class="tag">Linux kernel</span><span class="tag">platform/x86</span><span class="tag">HID</span></div>
           <div class="kernel-links mono">
-            <a href="https://github.com/torvalds/linux/commit/d2d2e7c8fb37b27301ee5c8343b2f7037efc6ea6" target="_blank" rel="noopener">mainline commit d2d2e7c ↗</a>
-            <a href="https://lore.kernel.org/platform-driver-x86/20260519181155.46044-1-yaseen@ghoul.dev/" target="_blank" rel="noopener">PPT patch (lore) ↗</a>
-            <a href="https://lore.kernel.org/linux-input/20260605113952.38435-1-yaseen@ghoul.dev/" target="_blank" rel="noopener">usbhid patch (lore) ↗</a>
+            <a href="https://github.com/torvalds/linux/commit/d2d2e7c8fb37b27301ee5c8343b2f7037efc6ea6" target="_blank" rel="noopener">mainline commit d2d2e7c <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+            <a href="https://lore.kernel.org/platform-driver-x86/20260519181155.46044-1-yaseen@ghoul.dev/" target="_blank" rel="noopener">PPT patch (lore) <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+            <a href="https://lore.kernel.org/linux-input/20260605113952.38435-1-yaseen@ghoul.dev/" target="_blank" rel="noopener">usbhid patch (lore) <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
           </div>
         </div>
         <div class="gitlog">
@@ -264,7 +264,7 @@ const lane = [...tech, ...tech, ...tech];
       <span class="chip">Open Gaming Collective</span>
       <span class="chip">asus-linux</span>
       <span class="chip">caelestia-dots</span>
-      <a href="https://github.com/Ghoul4500" target="_blank" rel="noopener" class="accent mono" style="font-size:12px;margin-left:4px;">github.com/Ghoul4500 →</a>
+      <a href="https://github.com/Ghoul4500" target="_blank" rel="noopener" class="accent mono" style="font-size:12px;margin-left:4px;">github.com/Ghoul4500 <span aria-hidden="true">→</span><span class="visually-hidden"> (opens in a new tab)</span></a>
     </div>
   </section>
 
@@ -396,8 +396,8 @@ const lane = [...tech, ...tech, ...tech];
     <p>I take on a limited number of projects at a time. Hire me directly, or contract Zenryk if you'd rather work with a registered business. Tell me what you're building.</p>
     <div class="row">
       <a href="mailto:yaseen@ghoul.dev" class="btn btn-primary">yaseen@ghoul.dev</a>
-      <a href="https://github.com/Ghoul4500" target="_blank" rel="noopener" class="btn btn-ghost">GitHub ↗</a>
-      <a href="https://gitlab.com/Ghoul4500" target="_blank" rel="noopener" class="btn btn-ghost">GitLab ↗</a>
+      <a href="https://github.com/Ghoul4500" target="_blank" rel="noopener" class="btn btn-ghost">GitHub <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+      <a href="https://gitlab.com/Ghoul4500" target="_blank" rel="noopener" class="btn btn-ghost">GitLab <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
     </div>
     <div class="note mono">Based in Malé · UTC+5 · comfortable across US and EU hours<br />Invoicing worldwide: Payoneer, crypto, or bank wire</div>
   </section>
