@@ -7,11 +7,12 @@ export const SITE = {
   email: 'yaseen@ghoul.dev',
 } as const;
 
-export const DEFAULT_TITLE = 'Ahmed Yaseen Ibrahim (Ghoul) — Software Engineer · ghoul.dev';
+export const DEFAULT_TITLE =
+  'Ahmed Yaseen (Ghoul) — Linux Kernel Contributor in the Maldives · ghoul.dev';
 export const DEFAULT_DESCRIPTION =
-  'Ahmed Yaseen (Ghoul) — software engineer in the Maldives and Linux kernel contributor ' +
-  '(a patch in mainline). Lead engineer at OXIQA, founder of Zenryk. Builds platforms for ' +
-  'government ministries and product teams in TypeScript, Rust, C, Go and PHP.';
+  'A Linux kernel contributor in the Maldives with a patch in the mainline tree. ' +
+  'Lead engineer at OXIQA, founder of Zenryk, building government platforms in ' +
+  'Rust, Go, C, TypeScript and PHP.';
 
 // JSON-LD person graph for the homepage.
 export function personJsonLd(): object {
@@ -23,7 +24,7 @@ export function personJsonLd(): object {
     alternateName: ['Ahmed Yaseen', 'Yaseen', 'Ghoul', 'Ghoul4500'],
     url: SITE.url,
     email: `mailto:${SITE.email}`,
-    jobTitle: 'Software Engineer',
+    jobTitle: ['Software Engineer', 'Linux Kernel Contributor'],
     image: `${SITE.url}/og-image.png`,
     description: DEFAULT_DESCRIPTION,
     nationality: { '@type': 'Country', name: 'Maldives' },
@@ -34,7 +35,7 @@ export function personJsonLd(): object {
       { '@type': 'Organization', name: 'Synetecs', url: 'https://synetecs.io' },
     ],
     knowsAbout: [
-      'Linux kernel', 'C', 'TypeScript', 'Rust', 'Python', 'PHP', 'Go',
+      'Linux kernel', 'Linux kernel development', 'C', 'TypeScript', 'Rust', 'Python', 'PHP', 'Go',
       'Linux', 'systemd', 'platform/x86', 'Svelte', 'React', 'Astro',
       'Laravel', 'Django', 'Actix', 'PostgreSQL', 'Docker', 'AI', 'NLP', 'Open source',
     ],
