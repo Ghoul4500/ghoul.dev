@@ -60,4 +60,11 @@ const links = [
   // Close on link click or when resizing up to desktop.
   menu?.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setMenu(false)));
   matchMedia('(min-width: 721px)').addEventListener('change', (e) => e.matches && setMenu(false));
+  // Escape closes the open menu and returns focus to the toggle.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && burger?.getAttribute('aria-expanded') === 'true') {
+      setMenu(false);
+      burger.focus();
+    }
+  });
 </script>

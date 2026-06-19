@@ -55,9 +55,13 @@ if (token) {
       </span>
     </div>
     <div class="contrib-scroll">
-      <div class="contrib-grid">
+      <div
+        class="contrib-grid"
+        role="img"
+        aria-label={`GitHub contribution heatmap — ${total.toLocaleString()} contributions in the last year`}
+      >
         {weeks.map((w) => (
-          <div class="contrib-col">
+          <div class="contrib-col" aria-hidden="true">
             {w.map((d) => <span class={`cd l${d.level}`} title={`${d.count} on ${d.date}`}></span>)}
           </div>
         ))}
