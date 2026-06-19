@@ -1,46 +1,50 @@
-name: deploy
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment, cancel in-progress runs of the same group.
 concurrency:
-  group: deploy-ghoul-dev
-  cancel-in-progress: false
+  group: pages
+  cancel-in-progress: true
 
 jobs:
-  deploy:
-    name: deploy to verity
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-
     steps:
-      - name: Write SSH key
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Type-check
+        run: npm run check
+      - name: Build site
+        run: npm run build
         env:
-          SSH_KEY: ${{ secrets.VERITY_SSH_KEY }}
-          SSH_HOST: ${{ secrets.VERITY_HOST }}
-        run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          # PAT (read:user) so the contribution graph includes private activity.
+          # Falls back to the built-in token (public only) if GH_PAT is unset.
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
 
-      - name: Trigger remote deploy
-        env:
-          SSH_HOST: ${{ secrets.VERITY_HOST }}
-          SSH_USER: ${{ secrets.VERITY_USER }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_ALLOWED_USER_ID: ${{ secrets.TELEGRAM_ALLOWED_USER_ID }}
-        run: |
-          # The key on the server is locked to `command="/opt/ghoul.dev/scripts/deploy.sh"`,
-          # so any command we send is ignored — only that script runs. We pipe
-          # the runtime env over SSH stdin; the script writes it to
-          # /opt/ghoul.dev/.env before the build.
-          {
-            printf 'GITHUB_TOKEN=%s\n'           "$GH_TOKEN"
-            printf 'TELEGRAM_BOT_TOKEN=%s\n'     "$TELEGRAM_BOT_TOKEN"
-            printf 'TELEGRAM_ALLOWED_USER_ID=%s\n' "$TELEGRAM_ALLOWED_USER_ID"
-          } | ssh -o BatchMode=yes "$SSH_USER@$SSH_HOST"
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

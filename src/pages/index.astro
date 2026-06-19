@@ -1,33 +1,374 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Nav from '../components/Nav.astro';
-import Hero from '../components/Hero.astro';
-import About from '../components/About.astro';
-import Experience from '../components/Experience.astro';
-import ClientWork from '../components/ClientWork.astro';
-import Projects from '../components/Projects.astro';
-import OpenSource from '../components/OpenSource.astro';
-import Education from '../components/Education.astro';
-import Contact from '../components/Contact.astro';
-import Footer from '../components/Footer.astro';
-import Marquee from '../components/islands/Marquee.svelte';
-import { techStack } from '../lib/projects.ts';
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Contributions from '../components/Contributions.astro';
+import { personJsonLd } from '../lib/seo';
+import { formatDate } from '../lib/date';
 
-export const prerender = true;
+const posts = (await getCollection('blog'))
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => b.data.published.valueOf() - a.data.published.valueOf());
+
+// Live public-repo count at build time so the stat can't silently rot.
+// Falls back to last-known value if the API is unreachable/rate-limited/slow.
+// In CI, GITHUB_TOKEN lifts the 60 req/hr unauthenticated limit on shared IPs.
+let repoCount = 16;
+try {
+  const token = process.env.GITHUB_TOKEN;
+  const res = await fetch('https://api.github.com/users/Ghoul4500/repos?per_page=100&type=public', {
+    headers: {
+      'User-Agent': 'ghoul.dev-build',
+      Accept: 'application/vnd.github+json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    signal: AbortSignal.timeout(5000),
+  });
+  if (res.ok) {
+    const repos = await res.json();
+    if (Array.isArray(repos) && repos.length) {
+      repoCount = repos.filter((r) => !r.fork).length;
+    }
+  }
+} catch {
+  /* keep fallback */
+}
+
+const tech = [
+  'Rust', 'C', 'TypeScript', 'Go', 'PHP · Laravel', 'Python', 'Linux', 'PostgreSQL', 'Docker',
+];
+// Each marquee group must be wider than the widest viewport or a blank gap
+// scrolls in at the -50% loop point. Repeat the lane so it always overflows.
+const lane = [...tech, ...tech, ...tech];
 ---
+<Base jsonLd={personJsonLd()} home>
+  <!-- HERO -->
+  <section id="top" class="hero">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <div class="badge"><span class="live"></span>PATCH IN THE MAINLINE LINUX KERNEL</div>
+        <h1>I'm <span class="accent">Yaseen</span>,<br />a software engineer.</h1>
+        <p class="lead">
+          I work close to the metal. One patch in the mainline <strong>Linux kernel</strong>,
+          two more in review on LKML. Day to day I lead builds for Maldivian government
+          platforms in Laravel, Go and Rust, plus the Linux servers under them. Day job is
+          <strong>OXIQA</strong>. I take my own work through <strong>Zenryk</strong>.
+        </p>
+        <div class="hero-cta">
+          <a href="#work" class="btn btn-primary">See the work →</a>
+          <a href="mailto:yaseen@ghoul.dev" class="btn btn-ghost">Get in touch</a>
+        </div>
+        <div class="hero-meta">
+          <span>Malé, Maldives</span>
+          <span class="sep"></span>
+          <span>UTC+5</span>
+          <span class="sep"></span>
+          <span class="em">yaseen@ghoul.dev</span>
+        </div>
+      </div>
 
-<Layout>
-  <Nav />
-  <main id="main">
-    <Hero />
-    <Marquee items={techStack} client:load />
-    <About />
-    <Experience />
-    <ClientWork />
-    <Projects />
-    <OpenSource />
-    <Education />
-    <Contact />
-  </main>
-  <Footer />
-</Layout>
+      <div class="hero-term">
+        <div class="term">
+          <div class="term-bar">
+            <span class="tdot"></span><span class="tdot"></span><span class="tdot on"></span>
+            <span class="ttitle">zsh — yaseen@ghoul.dev</span>
+          </div>
+          <div class="term-body">
+            <div><span class="prompt">yaseen@ghoul</span><span class="path"> ~ %</span> whoami</div>
+            <div class="out">software engineer · Linux kernel contributor · OXIQA</div>
+            <div><span class="prompt">yaseen@ghoul</span><span class="path"> ~ %</span> cat stack.txt</div>
+            <div class="out">TypeScript&nbsp;&nbsp;Rust&nbsp;&nbsp;C&nbsp;&nbsp;Python&nbsp;&nbsp;PHP&nbsp;&nbsp;Go<br />Laravel&nbsp;&nbsp;Svelte&nbsp;&nbsp;Linux&nbsp;&nbsp;systemd&nbsp;&nbsp;Docker</div>
+            <div><span class="prompt">yaseen@ghoul</span><span class="path"> ~ %</span> uptime</div>
+            <div class="out">shipping since 2021 · gov platforms, Rust, kernel</div>
+            <div style="margin-top:10px;"><span class="prompt">yaseen@ghoul</span><span class="path"> ~ %</span> <span class="cursor"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TECH MARQUEE -->
+  <div class="marquee">
+    <div class="marquee-track">
+      <div class="marquee-group">
+        {lane.map((t) => (<><span>{t}</span><span class="slash">/</span></>))}
+      </div>
+      <div class="marquee-group" aria-hidden="true">
+        {lane.map((t) => (<><span>{t}</span><span class="slash">/</span></>))}
+      </div>
+    </div>
+  </div>
+
+  <!-- CLIENTS -->
+  <section id="clients" class="section" style="padding-top:92px;">
+    <div class="section-head">
+      <span class="idx">01 / clients</span>
+      <h2>Who I've built for</h2>
+    </div>
+    <p class="lead-text">
+      Government and UN platforms, plus consumer apps used across the Maldives. Mostly under
+      OXIQA and Synetecs. On most of them I'm the lead or only engineer: backend, frontend,
+      and the Linux servers underneath.
+    </p>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-head"><h3>Kuri Portal</h3><span class="pill">GOV</span></div>
+        <div class="sub">Ministry of Higher Education</div>
+        <div class="meta">Lead developer · via OXIQA · 2025—now</div>
+        <p>The ministry's main platform. Laravel backend behind a student portal, an admin portal and core services; Go cloud infra, Ansible deploys.</p>
+        <div class="tags"><span class="tag">Laravel</span><span class="tag">TypeScript</span><span class="tag">Go</span><span class="tag">Ansible</span></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Transport &amp; Civil Aviation</h3><span class="pill">GOV</span></div>
+        <div class="sub">MOTCA</div>
+        <div class="meta">Full-stack · via OXIQA · 2024—now</div>
+        <p>Internal systems. Vehicle registration, permit verification, ticketing APIs (some in Rust), staff admin tools.</p>
+        <div class="tags"><span class="tag">Laravel</span><span class="tag">Vue</span><span class="tag">Rust</span></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>UNDP · Dhivehi TTS</h3><span class="pill">AI</span></div>
+        <div class="sub">United Nations Development Programme</div>
+        <div class="meta">Built the dashboard · via Synetecs · 2025</div>
+        <p>Dashboard for the UN's Dhivehi text-to-speech project. Record voice samples, train the voice, run it from one UI.</p>
+        <div class="tags"><span class="tag">Next.js</span><span class="tag">TTS</span></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Avas</h3><span class="pill">MOBILE</span></div>
+        <div class="sub">The Maldives' #1 taxi app · 50K+ downloads</div>
+        <div class="meta">Full-stack developer · 2023—2025</div>
+        <p>The country's most-used ride-hailing app. I was one of its engineers, working across the rider and driver apps, the web APIs, and the ops admin panel, through launch and the months after.</p>
+        <div class="tags"><span class="tag">Mobile</span><span class="tag">REST APIs</span><span class="tag">Admin</span></div>
+        <a href="https://play.google.com/store/apps/details?id=app.avas.rider" target="_blank" rel="noopener" class="proof mono">50K+ on Google Play ↗</a>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Hologo</h3><span class="pill">PRODUCT</span></div>
+        <div class="sub">Education AI platform</div>
+        <div class="meta">Full-stack · via OXIQA · 2024—now</div>
+        <p>Web, admin, native Android, a classroom smart-screen build. One API behind all of it.</p>
+        <div class="tags"><span class="tag">TypeScript</span><span class="tag">Java</span><span class="tag">WebSocket</span></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>RepSet</h3><span class="pill">PRODUCT</span></div>
+        <div class="sub">Personal-trainer client management</div>
+        <div class="meta">Sole engineer · client build · 2026</div>
+        <p>A full client-management platform for a personal-training business: block-periodization programming, scheduling, progress tracking. Postgres and JWT auth, Dockerised with CI/CD.</p>
+        <div class="tags"><span class="tag">TypeScript</span><span class="tag">React</span><span class="tag">PostgreSQL</span></div>
+      </div>
+    </div>
+    <div class="also">
+      <span class="lbl">also:</span>
+      <span class="chip">thaana.ai · Dhivehi language models</span>
+      <span class="chip">legalnotes · AI for legal</span>
+      <span class="chip">Ministry of Dhivehi Language · Dhiraasa</span>
+      <span class="chip">iqdot · SentinelOne / EDR</span>
+    </div>
+  </section>
+
+  <!-- SERVICES -->
+  <section id="services" class="section">
+    <div class="section-head">
+      <span class="idx">02 / services</span>
+      <h2>What I build</h2>
+    </div>
+    <div class="svc-grid">
+      <div class="svc"><div class="num">01</div><h3>Full-stack web apps</h3><p>Frontend in React, Svelte or Vue; backend in Laravel, Django, Node or Go. I've built and maintained full platforms for government ministries.</p></div>
+      <div class="svc"><div class="num">02</div><h3>AI &amp; language tooling</h3><p>LLM tools, NLP, and text-to-speech — including work on Dhivehi with the Synetecs team.</p></div>
+      <div class="svc"><div class="num">03</div><h3>Backend &amp; systems</h3><p>APIs in Rust, Go and Node, with the databases and infrastructure behind them.</p></div>
+      <div class="svc"><div class="num">04</div><h3>Bots &amp; automation</h3><p>Discord and Telegram bots, plus automation between systems. Glue that runs without a human in the loop.</p></div>
+      <div class="svc"><div class="num">05</div><h3>Linux &amp; low-level</h3><p>Rust and C, down to the kernel. A patch in mainline Linux, plus MRs in the asusctl daemon.</p></div>
+      <div class="svc dashed"><h3>Something else?</h3><p>If it's technical, get in touch. I'm probably interested.</p><a href="mailto:yaseen@ghoul.dev">→ Tell me about it</a></div>
+    </div>
+  </section>
+
+  <!-- WORK -->
+  <section id="work" class="section">
+    <div class="section-head">
+      <span class="idx">03 / work</span>
+      <h2>Projects</h2>
+    </div>
+
+    <div class="feature">
+      <div class="feature-grid">
+        <div class="feature-main">
+          <div class="feature-eyebrow">
+            <span class="lang lang-kernel"></span>
+            <span>Linux kernel · platform/x86</span>
+            <span class="flag">IN MAINLINE</span>
+          </div>
+          <h3>Upstream Linux kernel</h3>
+          <p>I write C for the kernel's ASUS laptop drivers. My fix for mini-LED handling on 2024+ ASUS hardware (the firmware mapping was wrong, so writes failed) was merged by the platform-driver-x86 maintainer into Linus' mainline tree. Two more are in review on the mailing lists: one gates PPT power writes behind the active fan curve; a usbhid change skips interrupt polling on devices with no input reports.</p>
+          <div class="tags"><span class="tag">C</span><span class="tag">Linux kernel</span><span class="tag">platform/x86</span><span class="tag">HID</span></div>
+          <div class="kernel-links mono">
+            <a href="https://github.com/torvalds/linux/commit/d2d2e7c8fb37b27301ee5c8343b2f7037efc6ea6" target="_blank" rel="noopener">mainline commit d2d2e7c ↗</a>
+            <a href="https://lore.kernel.org/platform-driver-x86/20260519181155.46044-1-yaseen@ghoul.dev/" target="_blank" rel="noopener">PPT patch (lore) ↗</a>
+            <a href="https://lore.kernel.org/linux-input/20260605113952.38435-1-yaseen@ghoul.dev/" target="_blank" rel="noopener">usbhid patch (lore) ↗</a>
+          </div>
+        </div>
+        <div class="gitlog">
+          <div class="head"><span class="sha">$</span> git log --oneline -- drivers/platform/x86</div>
+          <div style="margin-top:8px;"><span class="sha">d2d2e7c</span> asus-armoury: fix mini-LED MODE2</div>
+          <div style="opacity:.6;margin-top:2px;"># merged into mainline (Torvalds tree)</div>
+          <div style="margin-top:8px;color:var(--muted);">~ in review on lkml ~</div>
+          <div><span class="sha">·····</span> asus-armoury: gate PPT on fan curve</div>
+          <div><span class="sha">·····</span> usbhid: skip polling, no input reports</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="subhead">Personal &amp; open-source projects</div>
+    <div class="proj-grid">
+      <a href="https://github.com/OpenGamingCollective/asusctl/commits?author=Ghoul4500" target="_blank" rel="noopener" class="proj">
+        <div class="proj-eyebrow"><span class="lang lang-rust"></span><span class="lbl">Rust · 18 commits upstream</span></div>
+        <h4>asusctl</h4>
+        <p>The Rust daemon that makes ASUS ROG laptops work on Linux. I added Scar 18 2025 support, rebuilt the AniMe Matrix image/GIF pipeline, and fixed PPT power-tuning races.</p>
+      </a>
+      <a href="https://github.com/Ghoul4500/autoclaude" target="_blank" rel="noopener" class="proj">
+        <div class="proj-eyebrow"><span class="lang lang-node"></span><span class="lbl">Node · agentic</span></div>
+        <h4>autoclaude</h4>
+        <p>A local agent that picks up GitHub issues, runs Claude CLI in a sandbox, and opens a PR with the fix.</p>
+      </a>
+      <a href="https://github.com/Ghoul4500/hisaab" target="_blank" rel="noopener" class="proj">
+        <div class="proj-eyebrow"><span class="lang lang-ts"></span><span class="lbl">TypeScript · local-first</span></div>
+        <h4>hisaab</h4>
+        <p>Browser-only analytics for a Maldives Islamic Bank statement: spending, wealth over time, and a nisab/hawl zakat tracker. Nothing leaves your machine.</p>
+      </a>
+    </div>
+    <div class="also">
+      <span class="lbl">also contributing at</span>
+      <span class="chip">Open Gaming Collective</span>
+      <span class="chip">asus-linux</span>
+      <span class="chip">caelestia-dots</span>
+      <a href="https://github.com/Ghoul4500" target="_blank" rel="noopener" class="accent mono" style="font-size:12px;margin-left:4px;">github.com/Ghoul4500 →</a>
+    </div>
+  </section>
+
+  <!-- EXPERIENCE -->
+  <section id="experience" class="section">
+    <div class="section-head">
+      <span class="idx">04 / experience</span>
+      <h2>Where I've worked</h2>
+    </div>
+    <div class="timeline">
+      <div class="tl-item"><span class="node"></span>
+        <div class="tl-period">Feb 2025 — now</div>
+        <div class="tl-body"><h3>OXIQA</h3><div class="tl-role">Full-stack Engineer</div>
+          <p>Lead dev on platforms for government ministries and product teams. APIs, frontends, the Linux servers under them. On bigger engagements, the deploy and infra calls too.</p></div>
+      </div>
+      <div class="tl-item"><span class="node"></span>
+        <div class="tl-period">2025 — now</div>
+        <div class="tl-body"><h3>Synetecs</h3><div class="tl-role">Collaborator · AI</div>
+          <p>The AI side: thaana.ai, legalnotes, and the UNDP Dhivehi TTS dashboard.</p></div>
+      </div>
+      <div class="tl-item"><span class="node"></span>
+        <div class="tl-period">2026 — now</div>
+        <div class="tl-body"><h3>Linux upstream · asus-linux · OGC</h3><div class="tl-role">Open-source Contributor</div>
+          <p>Kernel and userspace work on the platform/x86 ASUS drivers and the asusctl daemon, plus tooling for the Open Gaming Collective.</p></div>
+      </div>
+      <div class="tl-item past"><span class="node"></span>
+        <div class="tl-period">2023 — 2025</div>
+        <div class="tl-body"><h3>AvasRide</h3><div class="tl-role">Full-stack Developer</div>
+          <p>One of the engineers on the Avas ride-hailing platform — the rider and driver apps, the web APIs, and the ops admin panel.</p></div>
+      </div>
+      <div class="tl-item past"><span class="node"></span>
+        <div class="tl-period">2021 — 2023</div>
+        <div class="tl-body"><h3>Ooredoo Maldives</h3><div class="tl-role">Provisioning Officer</div>
+          <p>Field fiber → the provisioning office: device configs for mobile &amp; fiber, staff training, UAT. Employee of the month ×2.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACTIVITY -->
+  <section id="activity" class="section">
+    <div class="section-head">
+      <span class="idx">05 / activity</span>
+      <h2>On GitHub</h2>
+    </div>
+    <div class="stat-grid">
+      <div class="stat"><div class="n">1</div><div class="l">patch in the mainline kernel</div></div>
+      <div class="stat"><div class="n">18</div><div class="l">commits in asusctl</div></div>
+      <div class="stat"><div class="n">{repoCount}</div><div class="l">public repositories</div></div>
+      <div class="stat"><div class="n">2021</div><div class="l">shipping since</div></div>
+    </div>
+    <Contributions />
+  </section>
+
+  <!-- EDUCATION -->
+  <section id="education" class="section">
+    <div class="section-head">
+      <span class="idx">06 / education</span>
+      <h2>Education</h2>
+    </div>
+    <div class="edu-grid">
+      <div class="edu">
+        <div class="when">2022 — 2025</div>
+        <h3>BSc (Hons) Computer Science</h3>
+        <div class="where">UWE Bristol · Villa College</div>
+        <div class="tags"><span class="award-fill">College Medal · top of cohort</span><span class="award">First Class Honours</span></div>
+      </div>
+      <div class="edu">
+        <div class="when">2021</div>
+        <h3>Foundation in Engineering</h3>
+        <div class="where last">Villa College</div>
+      </div>
+      <div class="edu">
+        <div class="when">2019</div>
+        <h3>O Levels</h3>
+        <div class="where">M.Atoll School</div>
+        <span class="award">National Top 7</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- BLOG -->
+  <section id="blog" class="section">
+    <div class="section-head">
+      <span class="idx">07 / writing</span>
+      <h2>Writing</h2>
+    </div>
+    <div class="blog-grid">
+      {posts.slice(0, 3).map((p) => (
+        <a href={`/blog/${p.id}/`} class="post-card">
+          <div class="when">{formatDate(p.data.published)}</div>
+          <h3>{p.data.cardTitle ?? p.data.title}</h3>
+          <p>{p.data.description}</p>
+          <span class="more">Read →</span>
+        </a>
+      ))}
+    </div>
+    {posts.length > 3 && (
+      <div class="also" style="margin-top:22px;">
+        <a href="/blog" class="accent mono" style="font-size:13px;">All posts →</a>
+      </div>
+    )}
+  </section>
+
+  <!-- VENTURE -->
+  <section class="section">
+    <div class="venture">
+      <div class="venture-main">
+        <span class="idx mono accent" style="font-size:13px;">08 / venture</span>
+        <h2><span class="accent">Zenryk</span>, my studio</h2>
+        <p>My own company, registered in the Maldives. The way to hire me as a business rather than a freelancer. You work directly with me, and for bigger builds I bring in a small bench of trusted collaborators, so you get senior continuity with the capacity of a team.</p>
+        <a href="mailto:info@zenryk.com">info@zenryk.com →</a>
+      </div>
+      <div class="venture-card">
+        <div class="inner">
+          <div class="name">zenryk<span class="accent">.com</span></div>
+          <div class="soon"><span class="live"></span>LAUNCHING SOON</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact" class="contact">
+    <span class="idx mono accent" style="font-size:13px;">09 / contact</span>
+    <h2>Need something built?</h2>
+    <p>I take on a limited number of projects at a time. Hire me directly, or contract Zenryk if you'd rather work with a registered business. Tell me what you're building.</p>
+    <div class="row">
+      <a href="mailto:yaseen@ghoul.dev" class="btn btn-primary">yaseen@ghoul.dev</a>
+      <a href="https://github.com/Ghoul4500" target="_blank" rel="noopener" class="btn btn-ghost">GitHub ↗</a>
+      <a href="https://gitlab.com/Ghoul4500" target="_blank" rel="noopener" class="btn btn-ghost">GitLab ↗</a>
+    </div>
+    <div class="note mono">Based in Malé · UTC+5 · comfortable across US and EU hours<br />Invoicing worldwide: Payoneer, crypto, or bank wire</div>
+  </section>
+</Base>

@@ -1,23 +1,4 @@
 User-agent: *
 Allow: /
 
-# AI crawlers — explicit allow so the bio gets picked up in answer engines.
-User-agent: GPTBot
-Allow: /
-
-User-agent: ChatGPT-User
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: anthropic-ai
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: Google-Extended
-Allow: /
-
-Sitemap: https://ghoul.dev/sitemap.xml
+Sitemap: https://ghoul.dev/sitemap-index.xml

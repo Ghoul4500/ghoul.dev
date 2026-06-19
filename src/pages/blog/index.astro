@@ -1,0 +1,35 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { formatDate } from '../../lib/date';
+
+const posts = (await getCollection('blog'))
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => b.data.published.valueOf() - a.data.published.valueOf());
+
+const title = 'Blog — ghoul.dev';
+const description =
+  'Writing by Ahmed Yaseen (Ghoul) — notes on the Maldives, banking, Linux and building software.';
+---
+<Base title={title} description={description}>
+  <section class="section" style="padding-top:76px;">
+    <div class="section-head">
+      <span class="idx">~/blog</span>
+      <h1>Writing</h1>
+    </div>
+    <p class="lead-text">
+      Notes, public records, and the occasional rant. Right now that's mostly the saga of two
+      Maldivian banks and a server bill they wouldn't let me pay.
+    </p>
+    <div class="blog-grid">
+      {posts.map((p) => (
+        <a href={`/blog/${p.id}/`} class="post-card">
+          <div class="when">{formatDate(p.data.published)}</div>
+          <h3>{p.data.title}</h3>
+          <p>{p.data.description}</p>
+          <span class="more">Read →</span>
+        </a>
+      ))}
+    </div>
+  </section>
+</Base>

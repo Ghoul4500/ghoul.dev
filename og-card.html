@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { background:#fff; }
+  .card {
+    width:1200px; height:630px; background:oklch(0.155 0.006 95); color:oklch(0.955 0.004 95);
+    font-family:'Space Grotesk',sans-serif; padding:72px 80px; position:relative; overflow:hidden;
+    display:flex; flex-direction:column; justify-content:space-between;
+  }
+  .top { font-family:'JetBrains Mono',monospace; font-size:24px; letter-spacing:.1em; color:oklch(0.66 0.007 95); }
+  .top b { color:oklch(0.90 0.19 124); }
+  h1 { font-size:96px; line-height:0.98; letter-spacing:-0.035em; font-weight:700; max-width:14ch; }
+  h1 .a { color:oklch(0.90 0.19 124); }
+  .sub { font-size:30px; color:oklch(0.66 0.007 95); margin-top:26px; font-weight:500; }
+  .row { display:flex; align-items:center; gap:18px; font-family:'JetBrains Mono',monospace; font-size:22px; color:oklch(0.66 0.007 95); }
+  .row .dot { width:9px; height:9px; background:oklch(0.90 0.19 124); border-radius:50%; }
+  .row .em { color:oklch(0.955 0.004 95); }
+  .glyph { position:absolute; top:64px; right:80px; width:64px; height:64px; display:flex; align-items:center; justify-content:center;
+    background:oklch(0.90 0.19 124); color:oklch(0.18 0.04 124); border-radius:14px; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:40px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="glyph">~</div>
+    <div class="top">GHOUL<b>.DEV</b> &nbsp;·&nbsp; MALÉ, MALDIVES</div>
+    <div>
+      <h1>Ahmed <span class="a">Yaseen</span> —<br>full-stack developer.</h1>
+      <div class="sub">Web platforms, AI tooling, Rust &amp; Linux. Engineer at OXIQA, founder of Zenryk.</div>
+    </div>
+    <div class="row"><span class="dot"></span><span>TypeScript / Rust / Python / PHP / Go</span><span class="dot"></span><span class="em">yaseen@ghoul.dev</span></div>
+  </div>
+</body>
+</html>

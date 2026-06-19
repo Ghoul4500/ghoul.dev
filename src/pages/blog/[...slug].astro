@@ -1,0 +1,106 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { SITE } from '../../lib/seo';
+import { formatDate } from '../../lib/date';
+
+export async function getStaticPaths() {
+  const posts = (await getCollection('blog')).filter((p) => !p.data.draft);
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const { data } = post;
+
+const url = new URL(`/blog/${post.id}/`, SITE.url).href;
+
+const blogPosting = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: data.title,
+  description: data.description,
+  datePublished: data.published.toISOString(),
+  dateModified: (data.updated ?? data.published).toISOString(),
+  author: { '@type': 'Person', name: SITE.author, url: SITE.url },
+  publisher: { '@type': 'Person', name: SITE.author, url: SITE.url },
+  mainEntityOfPage: url,
+  image: new URL(data.image, SITE.url).href,
+  keywords: data.keywords,
+};
+
+// For FAQ-flagged posts, build FAQPage structured data from the H2 questions
+// in the markdown body (each "## Question" followed by its answer paragraph),
+// so the page is eligible for FAQ rich results.
+function buildFaq() {
+  // Strip fenced code blocks first so a `## ` line inside one isn't mistaken
+  // for a question, then split on H2 headings.
+  const items = [];
+  const blocks = (post.body ?? '')
+    .replace(/```[\s\S]*?```/g, '')
+    .split(/^##\s+/m)
+    .slice(1);
+  for (const block of blocks) {
+    const nl = block.indexOf('\n');
+    if (nl === -1) continue; // heading with no body — skip
+    const name = block.slice(0, nl).trim();
+    const text = block
+      .slice(nl)
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // links → text
+      .replace(/[*_`>#]/g, '') // strip md emphasis/markers
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (name && text) {
+      items.push({ '@type': 'Question', name, acceptedAnswer: { '@type': 'Answer', text } });
+    }
+  }
+  return items;
+}
+
+const breadcrumb = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE.url },
+    { '@type': 'ListItem', position: 2, name: 'Blog', item: new URL('/blog/', SITE.url).href },
+    { '@type': 'ListItem', position: 3, name: data.title, item: url },
+  ],
+};
+
+const jsonLd: object[] = [blogPosting, breadcrumb];
+if (data.faq) {
+  const faqItems = buildFaq();
+  if (faqItems.length > 0) {
+    jsonLd.push({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqItems });
+  }
+}
+---
+<Base
+  title={`${data.title} — ghoul.dev`}
+  description={data.description}
+  type="article"
+  image={data.image}
+  keywords={data.keywords}
+  published={data.published.toISOString()}
+  modified={(data.updated ?? data.published).toISOString()}
+  jsonLd={jsonLd}
+>
+  <div class="wrap article">
+    <a href="/blog" class="back mono">← all posts</a>
+    <article>
+      <div class="article-meta mono">
+        <time datetime={data.published.toISOString()}>{formatDate(data.published, 'long')}</time>
+        {data.tags.length > 0 && <span class="dot">·</span>}
+        {data.tags.map((t) => <span class="tag">{t}</span>)}
+      </div>
+      <h1 class="article-title">{data.title}</h1>
+      <div class="prose">
+        <Content />
+      </div>
+    </article>
+    <div class="article-foot">
+      <a href="/blog" class="back mono">← all posts</a>
+      <a href="/#contact" class="back mono">contact →</a>
+    </div>
+  </div>
+</Base>

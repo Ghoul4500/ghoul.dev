@@ -1,43 +1,60 @@
-# Astro Starter Kit: Minimal
+# ghoul.dev
+
+Personal portfolio + blog for Ahmed Yaseen (Ghoul). Static [Astro](https://astro.build)
+site, deployed to GitHub Pages on the `ghoul.dev` custom domain.
+
+This repo previously hosted a single-page public notice about two Maldivian banks
+blocking my hosting payments. That notice now lives on as blog posts under `/blog`, and
+the root is the portfolio.
+
+## Develop
 
 ```sh
-pnpm create astro@latest -- --template minimal
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # → dist/
+npm run preview  # serve the production build
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Structure
 
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+```
+public/            static assets (CNAME, favicon, OG images, robots, IndexNow key)
+og-card.html       source for the portfolio OG image (rendered to public/og-image.png)
+src/
+  content/blog/    blog posts (Markdown + frontmatter)
+  content.config.ts
+  layouts/Base.astro    <head>, SEO, theme init, nav + footer
+  components/      Nav (with theme switcher), Footer
+  pages/
+    index.astro            portfolio homepage
+    blog/index.astro       blog listing
+    blog/[...slug].astro   post pages
+  styles/global.css    theme system (dark/light + 4 accents) + components
+  lib/seo.ts           site constants + JSON-LD
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Theme
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+Dark/light and four accent colors (acid, ember, violet, cyan) are driven by
+`data-theme` / `data-accent` on `<html>`, toggled in the nav and persisted to
+`localStorage`. An inline `<head>` script applies the saved theme before first paint.
 
-Any static assets, like images, can be placed in the `public/` directory.
+## Deploy
 
-## 🧞 Commands
+Pushing to `main` triggers `.github/workflows/deploy.yml`, which builds the site and
+publishes `dist/` to GitHub Pages. Pages must be set to the **GitHub Actions** source
+(Settings → Pages). The `CNAME` file keeps the `ghoul.dev` custom domain.
 
-All commands are run from the root of the project, from a terminal:
+## Regenerate the portfolio OG image
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
+`public/og-image.png` is rendered from `og-card.html` with headless Chrome:
 
-## 👀 Want to learn more?
+```sh
+google-chrome-stable --headless=new --disable-gpu --force-device-scale-factor=1 \
+  --window-size=1200,630 --virtual-time-budget=4000 \
+  --screenshot=public/og-image.png "file://$PWD/og-card.html"
+```
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Blog posts default to `public/og-bank.png` (the original bank-notice card); override
+per-post with an `image:` field in frontmatter.

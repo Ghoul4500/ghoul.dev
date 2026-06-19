@@ -1,0 +1,103 @@
+---
+import '../styles/global.css';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import { SITE, DEFAULT_TITLE, DEFAULT_DESCRIPTION } from '../lib/seo';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** OG type — 'website' for the home/blog index, 'article' for posts. */
+  type?: 'website' | 'article';
+  /** Absolute image URL or site-relative path. */
+  image?: string;
+  /** JSON-LD object(s) to embed. */
+  jsonLd?: object;
+  /** Article metadata, when type === 'article'. */
+  published?: string;
+  modified?: string;
+  keywords?: string;
+  /** True on the homepage — nav section links become in-page anchors. */
+  home?: boolean;
+}
+
+const {
+  title = DEFAULT_TITLE,
+  description = DEFAULT_DESCRIPTION,
+  type = 'website',
+  image = '/og-image.png',
+  jsonLd,
+  published,
+  modified,
+  keywords,
+  home = false,
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, SITE.url).href;
+const ogImage = new URL(image, SITE.url).href;
+---
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {keywords && <meta name="keywords" content={keywords} />}
+    <link rel="canonical" href={canonical} />
+    <meta name="author" content={SITE.author} />
+    <meta name="theme-color" content="#262521" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.github.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'"
+    />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:locale" content={SITE.locale} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:alt" content={title} />
+    {published && <meta property="article:published_time" content={published} />}
+    {modified && <meta property="article:modified_time" content={modified} />}
+    {type === 'article' && <meta property="article:author" content={SITE.author} />}
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content={SITE.twitter} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    {jsonLd && <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />}
+
+    <!-- Theme init before paint — avoids a flash of the wrong theme. -->
+    <script is:inline>
+      (function () {
+        try {
+          document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
+        } catch (_) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <a href="#main" class="skip-link">Skip to content</a>
+    <Nav home={home} />
+    <main id="main" class="page"><slot /></main>
+    <Footer />
+  </body>
+</html>

@@ -1,14 +1,18 @@
 ---
+const year = new Date().getFullYear();
 ---
-<footer class="border-t hairline px-6 md:px-10 py-8">
-  <div class="mx-auto w-full max-w-[1400px] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--color-ink-faint)]">
-    <div class="flex items-center gap-2">
-      <span class="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-acid)]"></span>
-      ghoul.dev · built with astro · svelte · hono
+<footer class="foot">
+  <div class="foot-inner">
+    <div class="brand">
+      <span class="glyph">~</span>
+      <span>ghoul<span class="dim">.dev</span></span>
     </div>
-    <div class="flex items-center gap-6">
-      <span>© 2026 Ahmed Yaseen Ibrahim</span>
-      <a href="#top" data-cursor="top" class="hover:text-[var(--color-ink)]">back to top ↑</a>
+    <div class="foot-links">
+      <a href="https://github.com/Ghoul4500" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://gitlab.com/Ghoul4500" target="_blank" rel="noopener">GitLab</a>
+      <a href="mailto:yaseen@ghoul.dev">Email</a>
+      <a href="/blog">Blog</a>
     </div>
+    <div class="copy">© {year} Ahmed Yaseen Ibrahim</div>
   </div>
 </footer>

@@ -1,0 +1,67 @@
+---
+// Build-time GitHub contribution heatmap. Prefers a PAT (GH_PAT, read:user) so
+// private contributions are included; falls back to the built-in token (public
+// only), then renders nothing if the API is unreachable.
+const token = process.env.GH_PAT || process.env.GITHUB_TOKEN;
+
+type Day = { date: string; count: number; level: number };
+let weeks: Day[][] = [];
+let total = 0;
+
+const level = (c: number) => (c === 0 ? 0 : c < 3 ? 1 : c < 6 ? 2 : c < 10 ? 3 : 4);
+
+if (token) {
+  try {
+    const res = await fetch('https://api.github.com/graphql', {
+      method: 'POST',
+      headers: {
+        Authorization: `bearer ${token}`,
+        'User-Agent': 'ghoul.dev-build',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query:
+          '{ user(login:"Ghoul4500"){ contributionsCollection{ contributionCalendar{ totalContributions weeks{ contributionDays{ date contributionCount } } } } } }',
+      }),
+      signal: AbortSignal.timeout(6000),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      const cal = json?.data?.user?.contributionsCollection?.contributionCalendar;
+      if (cal?.weeks) {
+        total = cal.totalContributions ?? 0;
+        weeks = cal.weeks.map((w: any) =>
+          w.contributionDays.map((d: any) => ({
+            date: d.date,
+            count: d.contributionCount,
+            level: level(d.contributionCount),
+          })),
+        );
+      }
+    }
+  } catch {
+    /* render nothing */
+  }
+}
+---
+{weeks.length > 0 && (
+  <div class="contrib">
+    <div class="contrib-head">
+      <span class="mono">{total.toLocaleString()} contributions in the last year</span>
+      <span class="contrib-legend mono">
+        less
+        <i class="cd l0"></i><i class="cd l1"></i><i class="cd l2"></i><i class="cd l3"></i><i class="cd l4"></i>
+        more
+      </span>
+    </div>
+    <div class="contrib-scroll">
+      <div class="contrib-grid">
+        {weeks.map((w) => (
+          <div class="contrib-col">
+            {w.map((d) => <span class={`cd l${d.level}`} title={`${d.count} on ${d.date}`}></span>)}
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+)}

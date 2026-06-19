@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="-5%" r="75%">
+      <stop offset="0%" stop-color="#ff785a" stop-opacity="0.13"/>
+      <stop offset="65%" stop-color="#ff785a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1c1a22"/>
+      <stop offset="100%" stop-color="#211f29"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="#15141a"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <!-- top label -->
+  <text x="80" y="92" font-family="monospace" font-size="22" letter-spacing="6" fill="#7d7568">GHOUL.DEV &#183; MAL&#201; &#183; 12 JUNE 2026</text>
+
+  <!-- headline -->
+  <text font-family="Georgia, 'Times New Roman', serif" font-weight="bold" fill="#efe9df" font-size="78" letter-spacing="-1">
+    <tspan x="78" y="232">Two banks won&#8217;t let me</tspan>
+    <tspan x="78" y="318">pay my own bills.</tspan>
+  </text>
+
+  <!-- subline -->
+  <text x="80" y="392" font-family="Georgia, serif" font-style="italic" font-size="36" fill="#a39b8e">And they won&#8217;t say why.</text>
+
+  <!-- BLOCKED stamp -->
+  <g transform="translate(995 150) rotate(8)">
+    <rect x="-118" y="-44" width="236" height="88" rx="9" fill="none" stroke="#ff5a48" stroke-width="4"/>
+    <text x="0" y="16" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="46" letter-spacing="6" fill="#ff5a48">BLOCKED</text>
+  </g>
+
+  <!-- bottom rule + bank names -->
+  <rect x="80" y="500" width="72" height="5" fill="#ff5a48"/>
+  <text x="80" y="558" font-family="monospace" font-size="27" letter-spacing="1" fill="#cfc7ba">Bank of Maldives</text>
+  <text x="80" y="596" font-family="monospace" font-size="27" letter-spacing="1" fill="#cfc7ba">Maldives Islamic Bank</text>
+  <text x="1120" y="596" text-anchor="end" font-family="monospace" font-size="22" fill="#7d7568">the whole story &#8594;</text>
+</svg>
