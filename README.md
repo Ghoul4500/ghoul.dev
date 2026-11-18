@@ -25,7 +25,7 @@ src/
   content/blog/    blog posts (Markdown + frontmatter)
   content.config.ts
   layouts/Base.astro    <head>, SEO, theme init, nav + footer
-  components/      Nav (with theme switcher), Footer
+  components/      Nav (with theme switcher), Footer, Contributions
   pages/
     index.astro            portfolio homepage
     blog/index.astro       blog listing
