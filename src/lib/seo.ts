@@ -10,8 +10,8 @@ export const SITE = {
 export const DEFAULT_TITLE =
   'Ahmed Yaseen (Ghoul) — Linux Kernel Contributor in the Maldives · ghoul.dev';
 export const DEFAULT_DESCRIPTION =
-  'A Linux kernel contributor in the Maldives with a patch in the mainline tree. ' +
-  'Lead engineer at OXIQA, founder of Zenryk, building government platforms in ' +
+  'A Linux kernel contributor in the Maldives with patches in the mainline tree, ' +
+  'and maintainer of asusctl. Lead engineer at OXIQA, founder of Zenryk, building government platforms in ' +
   'Rust, Go, C, TypeScript and PHP.';
 
 // JSON-LD person graph for the homepage.
@@ -24,7 +24,7 @@ export function personJsonLd(): object {
     alternateName: ['Ahmed Yaseen', 'Yaseen', 'Ghoul', 'Ghoul4500'],
     url: SITE.url,
     email: `mailto:${SITE.email}`,
-    jobTitle: ['Software Engineer', 'Linux Kernel Contributor'],
+    jobTitle: ['Software Engineer', 'Linux Kernel Contributor', 'asusctl Maintainer'],
     image: `${SITE.url}/og-image.png`,
     description: DEFAULT_DESCRIPTION,
     nationality: { '@type': 'Country', name: 'Maldives' },

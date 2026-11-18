@@ -3,6 +3,9 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  # Weekly rebuild so the build-time GitHub stats and heatmap stay current.
+  schedule:
+    - cron: '0 3 * * 1'
   workflow_dispatch:
 
 permissions:

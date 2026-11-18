@@ -9,18 +9,22 @@ const posts = (await getCollection('blog'))
   .filter((p) => !p.data.draft)
   .sort((a, b) => b.data.published.valueOf() - a.data.published.valueOf());
 
+const ghHeaders = () => {
+  const token = process.env.GITHUB_TOKEN;
+  return {
+    'User-Agent': 'ghoul.dev-build',
+    Accept: 'application/vnd.github+json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+};
+
 // Live public-repo count at build time so the stat can't silently rot.
 // Falls back to last-known value if the API is unreachable/rate-limited/slow.
 // In CI, GITHUB_TOKEN lifts the 60 req/hr unauthenticated limit on shared IPs.
 let repoCount = 10;
 try {
-  const token = process.env.GITHUB_TOKEN;
   const res = await fetch('https://api.github.com/users/Ghoul4500/repos?per_page=100&type=public', {
-    headers: {
-      'User-Agent': 'ghoul.dev-build',
-      Accept: 'application/vnd.github+json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+    headers: ghHeaders(),
     signal: AbortSignal.timeout(5000),
   });
   if (res.ok) {
@@ -33,25 +37,35 @@ try {
   /* keep fallback */
 }
 
-// asusctl commits authored by Ghoul4500 on the OGC repo, counted at build time
-// (frontmatter runs only during `astro build`, never client-side). Fallback 18.
-let asusctlCommits = 18;
+// Patches authored by me in Linus' tree, counted at build time. Fallback 4.
+let kernelPatches = 4;
 try {
-  const token = process.env.GITHUB_TOKEN;
   const res = await fetch(
-    'https://api.github.com/repos/OpenGamingCollective/asusctl/commits?author=Ghoul4500&per_page=100',
-    {
-      headers: {
-        'User-Agent': 'ghoul.dev-build',
-        Accept: 'application/vnd.github+json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      signal: AbortSignal.timeout(5000),
-    },
+    'https://api.github.com/search/commits?q=repo:torvalds/linux+author-email:yaseen@ghoul.dev&per_page=1',
+    { headers: ghHeaders(), signal: AbortSignal.timeout(5000) },
   );
   if (res.ok) {
-    const commits = await res.json();
-    if (Array.isArray(commits) && commits.length) asusctlCommits = commits.length;
+    const json = await res.json();
+    if (Number.isInteger(json?.total_count) && json.total_count > kernelPatches) {
+      kernelPatches = json.total_count;
+    }
+  }
+} catch {
+  /* keep fallback */
+}
+
+// Latest asusctl release tag, fetched at build time. Fallback is last-known.
+let asusctlRelease = '6.5.0';
+try {
+  const res = await fetch(
+    'https://api.github.com/repos/OpenGamingCollective/asusctl/releases/latest',
+    { headers: ghHeaders(), signal: AbortSignal.timeout(5000) },
+  );
+  if (res.ok) {
+    const json = await res.json();
+    if (typeof json?.tag_name === 'string' && json.tag_name) {
+      asusctlRelease = json.tag_name.replace(/^v/, '');
+    }
   }
 } catch {
   /* keep fallback */
@@ -69,11 +83,11 @@ const lane = [...tech, ...tech, ...tech];
   <section id="top" class="hero">
     <div class="hero-grid">
       <div class="hero-copy">
-        <div class="badge"><span class="live"></span>PATCH IN THE MAINLINE LINUX KERNEL</div>
+        <div class="badge"><span class="live"></span>{kernelPatches} PATCHES IN THE MAINLINE LINUX KERNEL</div>
         <h1>I'm <span class="accent">Yaseen</span>,<br />a software engineer.</h1>
         <p class="lead">
-          I work close to the metal. One patch in the mainline <strong>Linux kernel</strong>,
-          two more in review on LKML. Day to day I lead builds for Maldivian government
+          I work close to the metal. {kernelPatches} patches in the mainline <strong>Linux kernel</strong>,
+          and I maintain <strong>asusctl</strong>. Day to day I lead builds for Maldivian government
           platforms in Laravel, Go and Rust, plus the Linux servers under them. Day job is
           <strong>OXIQA</strong>. I take my own work through <strong>Zenryk</strong>.
         </p>
@@ -98,7 +112,7 @@ const lane = [...tech, ...tech, ...tech];
           </div>
           <div class="term-body">
             <div><span class="prompt">yaseen@ghoul</span><span class="path"> ~ %</span> whoami</div>
-            <div class="out">software engineer · Linux kernel contributor · OXIQA</div>
+            <div class="out">software engineer · Linux kernel contributor · asusctl maintainer</div>
             <div><span class="prompt">yaseen@ghoul</span><span class="path"> ~ %</span> cat stack.txt</div>
             <div class="out">TypeScript&nbsp;&nbsp;Rust&nbsp;&nbsp;C&nbsp;&nbsp;Python&nbsp;&nbsp;PHP&nbsp;&nbsp;Go<br />Laravel&nbsp;&nbsp;Svelte&nbsp;&nbsp;Linux&nbsp;&nbsp;systemd&nbsp;&nbsp;Docker</div>
             <div><span class="prompt">yaseen@ghoul</span><span class="path"> ~ %</span> uptime</div>
@@ -198,7 +212,7 @@ const lane = [...tech, ...tech, ...tech];
       <div class="svc"><div class="num">02</div><h3>AI &amp; language tooling</h3><p>LLM tools, NLP, and text-to-speech — including work on Dhivehi with the Synetecs team.</p></div>
       <div class="svc"><div class="num">03</div><h3>Backend &amp; systems</h3><p>APIs in Rust, Go and Node, with the databases and infrastructure behind them.</p></div>
       <div class="svc"><div class="num">04</div><h3>Bots &amp; automation</h3><p>Discord and Telegram bots, plus automation between systems. Glue that runs without a human in the loop.</p></div>
-      <div class="svc"><div class="num">05</div><h3>Linux &amp; low-level</h3><p>Rust and C, down to the kernel. A patch in mainline Linux, plus MRs in the asusctl daemon.</p></div>
+      <div class="svc"><div class="num">05</div><h3>Linux &amp; low-level</h3><p>Rust and C, down to the kernel. {kernelPatches} patches in mainline Linux, and I maintain the asusctl daemon.</p></div>
       <div class="svc dashed"><h3>Something else?</h3><p>If it's technical, get in touch. I'm probably interested.</p><a href="mailto:yaseen@ghoul.dev">→ Tell me about it</a></div>
     </div>
   </section>
@@ -219,31 +233,35 @@ const lane = [...tech, ...tech, ...tech];
             <span class="flag">IN MAINLINE</span>
           </div>
           <h3>Upstream Linux kernel</h3>
-          <p>I write C for the kernel's ASUS laptop drivers. My fix for mini-LED handling on 2024+ ASUS hardware (the firmware mapping was wrong, so writes failed) was merged by the platform-driver-x86 maintainer into Linus' mainline tree. Two more are in review on the mailing lists: one gates PPT power writes behind the active fan curve; a usbhid change skips interrupt polling on devices with no input reports.</p>
+          <p>I write C for the kernel's ASUS laptop drivers and USB HID, and my patches are in Linus' mainline tree. A fix for mini-LED handling on 2024+ ASUS hardware (the firmware mapping was wrong, so writes failed). Gating PPT power writes behind the active fan curve, shipped in 7.3. Validation of custom fan curves in asus-wmi, and a usbhid change that skips interrupt polling on devices with no input reports (tagged for stable), both landing in 7.4. One more asus-armoury series, fixing sysfs notifications for grouped attributes, is on the mailing list.</p>
           <div class="tags"><span class="tag">C</span><span class="tag">Linux kernel</span><span class="tag">platform/x86</span><span class="tag">HID</span></div>
           <div class="kernel-links mono">
             <a href="https://github.com/torvalds/linux/commit/d2d2e7c8fb37b27301ee5c8343b2f7037efc6ea6" target="_blank" rel="noopener">mainline commit d2d2e7c <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
-            <a href="https://lore.kernel.org/platform-driver-x86/20260519181155.46044-1-yaseen@ghoul.dev/" target="_blank" rel="noopener">PPT patch (lore) <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
-            <a href="https://lore.kernel.org/linux-input/20260605113952.38435-1-yaseen@ghoul.dev/" target="_blank" rel="noopener">usbhid patch (lore) <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+            <a href="https://github.com/torvalds/linux/commit/7bc99dff4d97" target="_blank" rel="noopener">7bc99df <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+            <a href="https://github.com/torvalds/linux/commit/bcbdfe03566a" target="_blank" rel="noopener">bcbdfe0 <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+            <a href="https://github.com/torvalds/linux/commit/4563e596bd91" target="_blank" rel="noopener">4563e59 <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+            <a href="https://lore.kernel.org/all/?q=f:yaseen@ghoul.dev" target="_blank" rel="noopener">all patches on lore <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
           </div>
         </div>
         <div class="gitlog">
-          <div class="head"><span class="sha">$</span> git log --oneline -- drivers/platform/x86</div>
-          <div style="margin-top:8px;"><span class="sha">d2d2e7c</span> asus-armoury: fix mini-LED MODE2</div>
-          <div style="opacity:.6;margin-top:2px;"># merged into mainline (Torvalds tree)</div>
-          <div style="margin-top:8px;color:var(--muted);">~ in review on lkml · Jun 2026 ~</div>
-          <div><span class="sha">·····</span> asus-armoury: gate PPT on fan curve</div>
-          <div><span class="sha">·····</span> usbhid: skip polling, no input reports</div>
+          <div class="head"><span class="sha">$</span> git log --oneline --author=yaseen@ghoul.dev</div>
+          <div style="margin-top:8px;"><span class="sha">4563e59</span> usbhid: skip polling, no input reports</div>
+          <div><span class="sha">bcbdfe0</span> asus-wmi: validate custom fan curves</div>
+          <div><span class="sha">7bc99df</span> asus-armoury: gate PPT on fan curve</div>
+          <div><span class="sha">d2d2e7c</span> asus-armoury: fix mini-LED MODE2</div>
+          <div style="opacity:.6;margin-top:2px;"># all in mainline (Torvalds tree)</div>
+          <div style="margin-top:8px;color:var(--muted);">~ on the list · Aug 2026 ~</div>
+          <div><span class="sha">·····</span> asus-armoury: grouped attr notify</div>
         </div>
       </div>
     </div>
 
     <div class="subhead">Personal &amp; open-source projects</div>
     <div class="proj-grid">
-      <a href="https://github.com/OpenGamingCollective/asusctl/commits?author=Ghoul4500" target="_blank" rel="noopener" class="proj">
-        <div class="proj-eyebrow"><span class="lang lang-rust"></span><span class="lbl">Rust · {asusctlCommits} commits upstream</span></div>
+      <a href="https://github.com/OpenGamingCollective/asusctl" target="_blank" rel="noopener" class="proj">
+        <div class="proj-eyebrow"><span class="lang lang-rust"></span><span class="lbl">Rust · maintainer</span></div>
         <h4>asusctl</h4>
-        <p>The Rust daemon that makes ASUS ROG laptops work on Linux. I added Scar 18 2025 support, rebuilt the AniMe Matrix image/GIF pipeline, and fixed PPT power-tuning races.</p>
+        <p>The Rust daemon that makes ASUS ROG laptops work on Linux. I maintain it and cut its releases. Along the way I added Scar 18 2025 support, rebuilt the AniMe Matrix image/GIF pipeline, and fixed PPT power-tuning races.</p>
         <span class="visually-hidden">(opens in a new tab)</span>
       </a>
       <a href="https://github.com/Ghoul4500/autoclaude" target="_blank" rel="noopener" class="proj">
@@ -287,8 +305,8 @@ const lane = [...tech, ...tech, ...tech];
       </div>
       <div class="tl-item"><span class="node"></span>
         <div class="tl-period">2026 — now</div>
-        <div class="tl-body"><h3>Linux upstream · asus-linux · OGC</h3><div class="tl-role">Open-source Contributor</div>
-          <p>Kernel and userspace work on the platform/x86 ASUS drivers and the asusctl daemon, plus tooling for the Open Gaming Collective.</p></div>
+        <div class="tl-body"><h3>Linux upstream · asus-linux · OGC</h3><div class="tl-role">Kernel Contributor · asusctl Maintainer</div>
+          <p>Kernel patches for the platform/x86 ASUS drivers and USB HID. Maintainer of the asusctl daemon, plus tooling for the Open Gaming Collective.</p></div>
       </div>
       <div class="tl-item past"><span class="node"></span>
         <div class="tl-period">2023 — 2025</div>
@@ -310,8 +328,8 @@ const lane = [...tech, ...tech, ...tech];
       <h2>On GitHub</h2>
     </div>
     <div class="stat-grid">
-      <div class="stat"><div class="n">1</div><div class="l">patch in the mainline kernel</div></div>
-      <div class="stat"><div class="n">{asusctlCommits}</div><div class="l">commits in asusctl</div></div>
+      <div class="stat"><div class="n">{kernelPatches}</div><div class="l">patches in the mainline kernel</div></div>
+      <div class="stat"><div class="n">{asusctlRelease}</div><div class="l">latest asusctl release · maintainer</div></div>
       <div class="stat"><div class="n">{repoCount}</div><div class="l">public repositories</div></div>
       <div class="stat"><div class="n">2021</div><div class="l">shipping since</div></div>
     </div>
