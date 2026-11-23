@@ -4,7 +4,7 @@
 // public/. Keep each sheet's content within one page (check the PDF after edits).
 import Base from '../layouts/Base.astro';
 import { getStats } from '../lib/stats';
-import { RESUME_PDF } from '../lib/seo';
+import { RESUME_HREF } from '../lib/resume';
 
 const { asusctlRelease } = await getStats();
 
@@ -123,7 +123,7 @@ const personal = [
       <div class="rb-title mono">~/resume</div>
       <div class="rb-sub">Two pages, A4. The PDF is rendered from this page.</div>
     </div>
-    <a href={RESUME_PDF} download class="btn btn-primary">Download PDF <span aria-hidden="true">↓</span></a>
+    <a href={RESUME_HREF} download class="btn btn-primary">Download PDF <span aria-hidden="true">↓</span></a>
   </div>
 
   <div class="sheets">
