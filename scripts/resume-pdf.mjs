@@ -1,5 +1,5 @@
 // Render /resume to public/Ahmed-Yaseen-Resume.pdf with Playwright's Chromium.
-// Run through `npm run resume` inside the nix dev shell, which provides the
+// Run through `npm run resume` inside the nix dev shell (nix/), which provides the
 // browser (PLAYWRIGHT_BROWSERS_PATH); playwright-core is pinned to the same
 // version as nixpkgs' playwright-driver.
 import { execFileSync } from 'node:child_process';
