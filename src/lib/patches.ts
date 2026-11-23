@@ -24,12 +24,12 @@ export const patches: Patch[] = [
   {
     sha: 'bcbdfe0', hash: 'bcbdfe03566a', area: 'asus-wmi',
     subject: 'platform/x86: asus-wmi: validate custom fan curves on enable',
-    text: 'Validate custom fan curves on enable, rejecting curves the firmware does not honour so sysfs keeps describing what the fans do. Merged for 7.4; backported to 7.3, 6.18, 6.12, 6.6 and 6.1 stable.',
+    text: 'Validates custom fan curves on enable and rejects ones the firmware would not honour, so sysfs never shows a curve that is not applied. Merged for 7.4, backported to 7.3, 6.18, 6.12, 6.6 and 6.1 stable.',
   },
   {
     sha: '7bc99df', hash: '7bc99dff4d97', area: 'asus-armoury',
     subject: 'platform/x86: asus-armoury: gate PPT writes behind active fan curve',
-    text: 'Gated PPT power-limit writes behind an active custom fan curve on the 30 models where firmware silently ignored them. Shipped in 7.3.',
+    text: 'PPT power-limit writes now require an active custom fan curve on the 30 models whose firmware ignores them otherwise. Released in 7.3.',
   },
   {
     sha: 'd2d2e7c', hash: 'd2d2e7c8fb37b27301ee5c8343b2f7037efc6ea6', area: 'asus-armoury',

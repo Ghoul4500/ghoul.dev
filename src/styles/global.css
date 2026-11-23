@@ -249,8 +249,7 @@ img { max-width: 100%; display: block; }
 .svc.dashed a { font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 600; }
 
 /* ---- work / projects ---------------------------------------------------- */
-.feature { display: block; border: 1px solid var(--border); border-radius: 18px; padding: clamp(28px, 4vw, 44px); background: var(--surface); margin-bottom: 18px; transition: border-color .2s; }
-.feature:hover { border-color: var(--accent); }
+.feature { display: block; border: 1px solid var(--border); border-radius: 18px; padding: clamp(28px, 4vw, 44px); background: var(--surface); margin-bottom: 18px; }
 .feature-grid { display: flex; flex-wrap: wrap; gap: 44px; align-items: center; }
 .feature-main { flex: 1 1 380px; min-width: min(300px, 100%); }
 .feature-eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; font-family: var(--mono); font-size: 12.5px; color: var(--muted); flex-wrap: wrap; }
@@ -294,7 +293,7 @@ img { max-width: 100%; display: block; }
 .tl-item:last-child { padding-bottom: 0; }
 .tl-item .node { position: absolute; left: -5px; top: 4px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
 .tl-item.past .node { background: var(--surface2); border: 1px solid var(--border); }
-.tl-period { flex: 0 0 150px; font-family: var(--mono); font-size: 12.5px; color: var(--muted); padding-top: 2px; }
+.tl-period { flex: 0 0 176px; font-family: var(--mono); font-size: 12.5px; color: var(--muted); padding-top: 2px; }
 .tl-body { flex: 1 1 360px; min-width: min(280px, 100%); }
 .tl-body h3 { margin: 0; font-size: 19px; }
 .tl-item.past .tl-body h3 { color: var(--muted); }

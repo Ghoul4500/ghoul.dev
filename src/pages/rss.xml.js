@@ -10,9 +10,9 @@ export async function GET(context) {
     .sort((a, b) => b.data.published.valueOf() - a.data.published.valueOf());
 
   return rss({
-    title: 'ghoul.dev — Writing',
+    title: 'ghoul.dev · Writing',
     description:
-      'Writing by Ahmed Yaseen (Ghoul) — notes on Linux, the kernel and building software.',
+      'Writing by Ahmed Yaseen (Ghoul): notes on Linux, the kernel and building software.',
     site: context.site,
     items: posts.map((p) => ({
       title: p.data.title,

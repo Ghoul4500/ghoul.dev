@@ -6,6 +6,7 @@ import Base from '../layouts/Base.astro';
 import { getStats } from '../lib/stats';
 import { RESUME_HREF } from '../lib/resume';
 import { patches, pending, LORE, commitUrl } from '../lib/patches';
+import { jobs, work } from '../lib/work';
 
 const { asusctlRelease } = await getStats();
 
@@ -36,54 +37,6 @@ const awards = [
   'College Medal, top of cohort',
   "Dean's Award and Dean's List",
   '2nd place, CyberExpo CTF',
-];
-
-const jobs = [
-  {
-    when: 'Feb 2025 — now', org: 'OXIQA', role: 'Lead Platform Engineer',
-    points: [
-      'Lead developer on platforms for government ministries and product teams: the APIs, the frontends, the Linux servers under them, and the deployment and infrastructure decisions.',
-    ],
-  },
-  {
-    when: '2025 — now', org: 'Synetecs', role: 'Collaborator · AI',
-    points: [
-      'The AI side: thaana.ai (Dhivehi language models), legalnotes, and the UNDP Dhivehi TTS dashboard.',
-    ],
-  },
-  {
-    when: 'Nov 2023 — Feb 2025', org: 'AvasRide', role: 'Full-stack Developer',
-    points: [
-      "One of the engineers on Avas, the Maldives' most-used ride-hailing app (50K+ downloads): rider and driver apps, the web APIs, and the ops admin panel, through launch and the months after.",
-    ],
-  },
-  {
-    when: 'Dec 2021 — Nov 2023', org: 'Ooredoo Maldives', role: 'Provisioning Officer · earlier Fiber Technician',
-    points: [
-      'Field fiber to the provisioning office: device configuration for mobile and fiber, managing 6 infrastructure partners, staff training and UAT. Employee of the month twice.',
-    ],
-  },
-];
-
-const work = [
-  { name: 'Kuri Portal', pill: 'GOV', sub: 'Ministry of Higher Education', meta: 'Lead developer · 2025—now',
-    text: "The ministry's main platform. Laravel backend behind a student portal, an admin portal and core services; Go cloud infra, Ansible deploys.",
-    tags: ['Laravel', 'TypeScript', 'Go', 'Ansible'] },
-  { name: 'Transport & Civil Aviation', pill: 'GOV', sub: 'MOTCA', meta: 'Full-stack · 2024—now',
-    text: 'Internal systems: vehicle registration, permit verification, ticketing APIs (some in Rust), staff admin tools.',
-    tags: ['Laravel', 'Vue', 'Rust'] },
-  { name: 'UNDP · Dhivehi TTS', pill: 'AI', sub: 'United Nations Development Programme', meta: 'Built the dashboard · 2025',
-    text: "Dashboard for the UN's Dhivehi text-to-speech project. Record voice samples, train the voice, run it from one UI.",
-    tags: ['Next.js', 'TTS'] },
-  { name: 'Avas', pill: 'MOBILE', sub: "The Maldives' #1 taxi app · 50K+ downloads", meta: 'Full-stack · 2023—2025',
-    text: 'Rider and driver apps, the web APIs and the ops admin panel for the country’s most-used ride-hailing app.',
-    tags: ['Mobile', 'REST APIs', 'Admin'] },
-  { name: 'Hologo', pill: 'PRODUCT', sub: 'Education AI platform', meta: 'Full-stack · 2024—now',
-    text: 'Web, admin, native Android and a classroom smart-screen build, with one API behind all of it.',
-    tags: ['TypeScript', 'Java', 'WebSocket'] },
-  { name: 'RepSet', pill: 'PRODUCT', sub: 'Personal-trainer client management', meta: 'Sole engineer · 2026',
-    text: 'Block-periodization programming, scheduling and progress tracking. Postgres and JWT auth, Dockerised with CI/CD.',
-    tags: ['TypeScript', 'React', 'PostgreSQL'] },
 ];
 
 const personal = [
@@ -175,7 +128,7 @@ const personal = [
               </div>
               <div class="r-sub mono">Rust · Open Gaming Collective · v{asusctlRelease}</div>
               <p>
-                I maintain the daemon and cut its releases. Added Scar 18 2025 support, rebuilt the AniMe
+                I maintain the daemon and handle its releases. Added Scar 18 2025 support, rebuilt the AniMe
                 Matrix image/GIF pipeline, fixed PPT power-tuning races.
               </p>
             </div>
@@ -312,9 +265,7 @@ const personal = [
     width: 794px; height: 1123px; flex: none; zoom: var(--rz, 1);
     position: relative; overflow: hidden;
     padding: 40px 44px 46px;
-    background:
-      radial-gradient(520px 300px at 100% 0%, color-mix(in oklch, var(--accent) 9%, transparent), transparent 70%),
-      var(--bg);
+    background: var(--bg);
     border: 1px solid var(--border); border-radius: 10px;
     color: var(--fg); font-size: 11px; line-height: 1.5;
     box-shadow: 0 30px 80px -40px rgb(0 0 0 / .6);

@@ -7,9 +7,9 @@ const posts = (await getCollection('blog'))
   .filter((p) => !p.data.draft)
   .sort((a, b) => b.data.published.valueOf() - a.data.published.valueOf());
 
-const title = 'Blog — ghoul.dev';
+const title = 'Blog · ghoul.dev';
 const description =
-  'Writing by Ahmed Yaseen (Ghoul) — notes on Linux, the kernel and building software.';
+  'Writing by Ahmed Yaseen (Ghoul): notes on Linux, the kernel and building software.';
 ---
 <Base title={title} description={description}>
   <section class="section" style="padding-top:76px;">
