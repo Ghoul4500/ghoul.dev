@@ -5,7 +5,6 @@ import Contributions from '../components/Contributions.astro';
 import { personJsonLd } from '../lib/seo';
 import { formatDate } from '../lib/date';
 import { getStats } from '../lib/stats';
-import { RESUME_HREF } from '../lib/resume';
 
 const posts = (await getCollection('blog'))
   .filter((p) => !p.data.draft)
@@ -37,7 +36,7 @@ const lane = [...tech, ...tech, ...tech];
         <div class="hero-cta">
           <a href="#work" class="btn btn-primary">See the work →</a>
           <a href="mailto:yaseen@ghoul.dev" class="btn btn-ghost">Get in touch</a>
-          <a href={RESUME_HREF} download class="btn btn-ghost">Résumé <span aria-hidden="true">↓</span><span class="visually-hidden"> (PDF download)</span></a>
+          <a href="/resume" class="btn btn-ghost">Résumé →</a>
         </div>
         <div class="hero-meta">
           <span>Malé, Maldives</span>
