@@ -1,0 +1,471 @@
+---
+// Résumé — two fixed A4 sheets in the site theme. This page is the single source
+// for the downloadable PDF: `npm run resume` prints it with Playwright into
+// public/. Keep each sheet's content within one page (check the PDF after edits).
+import Base from '../layouts/Base.astro';
+import { getStats } from '../lib/stats';
+import { RESUME_PDF } from '../lib/seo';
+
+const { asusctlRelease } = await getStats();
+
+const generated = new Date().toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+
+const contact = [
+  { label: 'yaseen@ghoul.dev', href: 'mailto:yaseen@ghoul.dev' },
+  { label: 'ghoul.dev', href: 'https://ghoul.dev' },
+  { label: 'github.com/Ghoul4500', href: 'https://github.com/Ghoul4500' },
+  { label: 'gitlab.com/Ghoul4500', href: 'https://gitlab.com/Ghoul4500' },
+];
+
+const commit = (sha: string) => `https://github.com/torvalds/linux/commit/${sha}`;
+const patches = [
+  {
+    sha: 'd2d2e7c', href: commit('d2d2e7c8fb37b27301ee5c8343b2f7037efc6ea6'), area: 'asus-armoury',
+    text: 'Fixed mini-LED mode get/set on 2024+ hardware. Reads decoded a constant instead of the device value, and writes skipped the firmware mode map. In 7.1, backported to 7.0 stable.',
+  },
+  {
+    sha: '7bc99df', href: commit('7bc99dff4d97'), area: 'asus-armoury',
+    text: 'Gated PPT power-limit writes behind an active custom fan curve on the 30 models where firmware silently ignored them. Shipped in 7.3.',
+  },
+  {
+    sha: 'bcbdfe0', href: commit('bcbdfe03566a'), area: 'asus-wmi',
+    text: 'Validate custom fan curves on enable, rejecting curves the firmware does not honour so sysfs keeps describing what the fans do. Merged for 7.4.',
+  },
+  {
+    sha: '4563e59', href: commit('4563e596bd91'), area: 'usbhid',
+    text: 'Skip interrupt polling on devices with no input reports, fixing dropped and stuck keys on ASUS ROG keyboards. Merged for 7.4, backported to stable in 7.3.2.',
+  },
+];
+
+const skills = [
+  { k: 'languages', v: ['Rust', 'C', 'TypeScript', 'Go', 'PHP', 'Python'] },
+  { k: 'kernel & systems', v: ['Linux kernel', 'platform/x86', 'USB HID', 'WMI / ACPI', 'systemd'] },
+  { k: 'backend', v: ['Laravel', 'Actix', 'Django', 'Node', 'PostgreSQL'] },
+  { k: 'frontend', v: ['React', 'Svelte', 'Vue', 'Next.js', 'Astro'] },
+  { k: 'infra', v: ['Docker', 'Ansible', 'Nix', 'CI/CD', 'Linux servers'] },
+];
+
+const education = [
+  { when: '2022 — 2025', what: 'BSc (Hons) Computer Science', where: 'UWE Bristol · Villa College', note: 'First Class Honours' },
+  { when: '2021', what: 'Foundation in Engineering', where: 'Villa College' },
+  { when: '2019', what: 'O Levels', where: 'M.Atoll School', note: 'National Top 7' },
+];
+
+const awards = [
+  'College Medal, top of cohort',
+  "Dean's Award and Dean's List",
+  '2nd place, CyberExpo CTF',
+];
+
+const jobs = [
+  {
+    when: 'Feb 2025 — now', org: 'OXIQA', role: 'Full-stack Engineer · lead developer',
+    points: [
+      'Lead developer on platforms for government ministries and product teams: the APIs, the frontends, the Linux servers under them, and the deployment and infrastructure decisions.',
+    ],
+  },
+  {
+    when: '2025 — now', org: 'Synetecs', role: 'Collaborator · AI',
+    points: [
+      'The AI side: thaana.ai (Dhivehi language models), legalnotes, and the UNDP Dhivehi TTS dashboard.',
+    ],
+  },
+  {
+    when: 'Nov 2023 — Feb 2025', org: 'AvasRide', role: 'Full-stack Developer',
+    points: [
+      "One of the engineers on Avas, the Maldives' most-used ride-hailing app (50K+ downloads): rider and driver apps, the web APIs, and the ops admin panel, through launch and the months after.",
+    ],
+  },
+  {
+    when: 'Dec 2021 — Nov 2023', org: 'Ooredoo Maldives', role: 'Provisioning Officer · earlier Fiber Technician',
+    points: [
+      'Field fiber to the provisioning office: device configuration for mobile and fiber, managing 6 infrastructure partners, staff training and UAT. Employee of the month twice.',
+    ],
+  },
+];
+
+const work = [
+  { name: 'Kuri Portal', pill: 'GOV', sub: 'Ministry of Higher Education', meta: 'Lead developer · 2025—now',
+    text: "The ministry's main platform. Laravel backend behind a student portal, an admin portal and core services; Go cloud infra, Ansible deploys.",
+    tags: ['Laravel', 'TypeScript', 'Go', 'Ansible'] },
+  { name: 'Transport & Civil Aviation', pill: 'GOV', sub: 'MOTCA', meta: 'Full-stack · 2024—now',
+    text: 'Internal systems: vehicle registration, permit verification, ticketing APIs (some in Rust), staff admin tools.',
+    tags: ['Laravel', 'Vue', 'Rust'] },
+  { name: 'UNDP · Dhivehi TTS', pill: 'AI', sub: 'United Nations Development Programme', meta: 'Built the dashboard · 2025',
+    text: "Dashboard for the UN's Dhivehi text-to-speech project. Record voice samples, train the voice, run it from one UI.",
+    tags: ['Next.js', 'TTS'] },
+  { name: 'Avas', pill: 'MOBILE', sub: "The Maldives' #1 taxi app · 50K+ downloads", meta: 'Full-stack · 2023—2025',
+    text: 'Rider and driver apps, the web APIs and the ops admin panel for the country’s most-used ride-hailing app.',
+    tags: ['Mobile', 'REST APIs', 'Admin'] },
+  { name: 'Hologo', pill: 'PRODUCT', sub: 'Education AI platform', meta: 'Full-stack · 2024—now',
+    text: 'Web, admin, native Android and a classroom smart-screen build, with one API behind all of it.',
+    tags: ['TypeScript', 'Java', 'WebSocket'] },
+  { name: 'RepSet', pill: 'PRODUCT', sub: 'Personal-trainer client management', meta: 'Sole engineer · 2026',
+    text: 'Block-periodization programming, scheduling and progress tracking. Postgres and JWT auth, Dockerised with CI/CD.',
+    tags: ['TypeScript', 'React', 'PostgreSQL'] },
+];
+
+const personal = [
+  { name: 'autoclaude', lbl: 'Node · agentic', href: 'https://github.com/Ghoul4500/autoclaude',
+    text: 'Picks up GitHub issues, runs Claude CLI in a sandbox, opens a PR.' },
+  { name: 'hisaab', lbl: 'TypeScript · local-first', href: 'https://github.com/Ghoul4500/hisaab',
+    text: 'Browser-only bank statement analytics with a nisab/hawl zakat tracker.' },
+  { name: 'How I got started as an ASUS Linux dev', lbl: 'Writing · ghoul.dev/blog', href: 'https://ghoul.dev/blog/how-i-got-started-as-an-asus-linux-dev/',
+    text: 'From a bricked lightbar to asusctl and the Open Gaming Collective.' },
+];
+---
+<Base
+  title="Résumé — Ahmed Yaseen (Ghoul) · ghoul.dev"
+  description="Résumé of Ahmed Yaseen: Linux kernel contributor, asusctl maintainer and full-stack engineer in the Maldives. Download as PDF."
+>
+  <div class="resume-bar">
+    <div>
+      <div class="rb-title mono">~/resume</div>
+      <div class="rb-sub">Two pages, A4. The PDF is rendered from this page.</div>
+    </div>
+    <a href={RESUME_PDF} download class="btn btn-primary">Download PDF <span aria-hidden="true">↓</span></a>
+  </div>
+
+  <div class="sheets">
+    <!-- ============================ SHEET 1 ============================ -->
+    <article class="sheet">
+      <header class="r-head">
+        <div class="r-top mono">
+          <span>GHOUL<b>.DEV</b> · MALÉ, MALDIVES · UTC+5</span>
+          <span>RÉSUMÉ</span>
+        </div>
+        <div class="r-hero">
+          <div>
+            <h1>Ahmed <span class="accent">Yaseen</span></h1>
+            <p class="r-role">Software engineer · Linux kernel contributor · asusctl maintainer</p>
+          </div>
+      <div class="r-term mono">
+        <div class="bar"><i></i><i></i><i class="on"></i><span>git log --oneline · mainline</span></div>
+        <div class="body">
+          {[...patches].reverse().map((p) => (
+            <div><span class="sha">{p.sha}</span> {p.area}</div>
+          ))}
+        </div>
+      </div>
+        </div>
+        <div class="r-contact mono">
+          {contact.map((c) => <a href={c.href}>{c.label}</a>)}
+        </div>
+      </header>
+
+      <div class="r-main">
+          <section>
+            <h2><span class="idx mono">01 /</span> Profile</h2>
+            <p class="r-lead">
+              I work close to the metal. I write C for the Linux kernel's ASUS platform drivers and USB HID,
+              maintain <strong>asusctl</strong>, the Rust daemon that makes ASUS ROG laptops work on Linux, and
+              handle infrastructure and community for the <strong>Open Gaming Collective</strong>. Day to day I
+              lead builds of Maldivian government platforms in Laravel, Go and Rust, plus the Linux servers
+              under them.
+            </p>
+          </section>
+
+          <section>
+            <h2><span class="idx mono">02 /</span> Open source</h2>
+
+            <div class="r-item">
+              <div class="r-item-head">
+                <h3>Linux kernel</h3>
+                <span class="flag mono">IN MAINLINE</span>
+                <span class="when mono">2026 — now</span>
+              </div>
+              <div class="r-sub mono">Contributor · platform/x86 · HID · C</div>
+              <ul class="r-patches">
+                {patches.map((p) => (
+                  <li>
+                    <a class="sha mono" href={p.href}>{p.sha}</a>
+                    <span><b class="mono">{p.area}</b> {p.text}</span>
+                  </li>
+                ))}
+                <li class="pending">
+                  <a class="sha mono" href="https://lore.kernel.org/all/?q=f:yaseen@ghoul.dev">on list</a>
+                  <span><b class="mono">asus-armoury</b> Two-patch series fixing sysfs notifications and pending_reboot for grouped attributes.</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="r-duo">
+            <div class="r-item">
+              <div class="r-item-head">
+                <h3>asusctl</h3>
+                <span class="when mono">maintainer</span>
+              </div>
+              <div class="r-sub mono">Rust · Open Gaming Collective · v{asusctlRelease}</div>
+              <p>
+                I maintain the daemon and cut its releases. Along the way I added Scar 18 2025 support, rebuilt
+                the AniMe Matrix image/GIF pipeline, and fixed PPT power-tuning races.
+              </p>
+            </div>
+
+            <div class="r-item">
+              <div class="r-item-head">
+                <h3>Open Gaming Collective</h3>
+                <span class="when mono">community manager</span>
+              </div>
+              <div class="r-sub mono">Community · infrastructure · org admin</div>
+              <p>I handle the collective's infrastructure and its community.</p>
+            </div>
+            </div>
+          </section>
+
+          <section>
+            <h2><span class="idx mono">03 /</span> Experience</h2>
+            <div class="r-timeline">
+              {jobs.map((j) => (
+                <div class="r-job">
+                  <div class="when mono">{j.when}</div>
+                  <div class="body">
+                    <h3>{j.org}</h3>
+                    <div class="r-sub mono">{j.role}</div>
+                    <ul>{j.points.map((p) => <li>{p}</li>)}</ul>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+      </div>
+
+      <footer class="r-foot mono"><span>ghoul.dev/resume</span><span>{generated}</span><span>1 / 2</span></footer>
+    </article>
+
+    <!-- ============================ SHEET 2 ============================ -->
+    <article class="sheet">
+      <div class="r-top mono r-top2">
+        <span>AHMED <b>YASEEN</b> · RÉSUMÉ</span>
+        <span>yaseen@ghoul.dev</span>
+      </div>
+
+      <section>
+        <h2><span class="idx mono">04 /</span> Selected work</h2>
+        <div class="r-work">
+          {work.map((w) => (
+            <div class="r-card">
+              <div class="r-card-head"><h3>{w.name}</h3><span class="pill">{w.pill}</span></div>
+              <div class="sub">{w.sub}</div>
+              <div class="meta mono">{w.meta}</div>
+              <p>{w.text}</p>
+              <div class="tags">{w.tags.map((t) => <span class="tag">{t}</span>)}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div class="r-tri">
+        <section>
+          <h2><span class="idx mono">05 /</span> Skills</h2>
+          {skills.map((s) => (
+            <div class="r-skill">
+              <div class="k mono">{s.k}</div>
+              <div class="v">{s.v.map((t) => <span class="tag">{t}</span>)}</div>
+            </div>
+          ))}
+        </section>
+
+        <section>
+          <h2><span class="idx mono">06 /</span> Education</h2>
+          {education.map((e) => (
+            <div class="r-edu">
+              <div class="when mono">{e.when}</div>
+              <h3>{e.what}</h3>
+              <div class="where">{e.where}</div>
+              {e.note && <span class="award mono">{e.note}</span>}
+            </div>
+          ))}
+        </section>
+
+        <section>
+          <h2><span class="idx mono">07 /</span> Awards</h2>
+          <ul class="r-awards">
+            {awards.map((a) => <li>{a}</li>)}
+          </ul>
+        </section>
+      </div>
+
+      <section>
+        <h2><span class="idx mono">08 /</span> Projects &amp; writing <span class="aside mono">off hours: chess · gym · 3D modelling · games</span></h2>
+        <div class="r-personal">
+          {personal.map((p) => (
+            <a class="r-proj" href={p.href}>
+              <div class="lbl mono">{p.lbl}</div>
+              <h3>{p.name}</h3>
+              <p>{p.text}</p>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <footer class="r-foot mono"><span>ghoul.dev/resume</span><span>{generated}</span><span>2 / 2</span></footer>
+    </article>
+  </div>
+
+  <script is:inline>
+    // Fit the fixed-width A4 sheets to narrow viewports.
+    (function () {
+      var fit = function () {
+        var z = Math.min(1, (document.documentElement.clientWidth - 24) / 794);
+        document.documentElement.style.setProperty('--rz', String(z));
+      };
+      fit();
+      addEventListener('resize', fit);
+    })();
+  </script>
+</Base>
+
+<style>
+  .mono { font-family: var(--mono); }
+  .accent { color: var(--accent); }
+
+  /* ---- on-screen chrome ---- */
+  .resume-bar {
+    width: min(794px, calc(100% - 24px)); margin: 36px auto 18px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .rb-title { color: var(--accent); font-size: 14px; }
+  .rb-sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .sheets { display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 0 12px 72px; }
+
+  /* ---- the sheet: A4 at 96dpi ---- */
+  .sheet {
+    width: 794px; height: 1123px; flex: none; zoom: var(--rz, 1);
+    position: relative; overflow: hidden;
+    padding: 40px 44px 46px;
+    background:
+      radial-gradient(520px 300px at 100% 0%, color-mix(in oklch, var(--accent) 9%, transparent), transparent 70%),
+      var(--bg);
+    border: 1px solid var(--border); border-radius: 10px;
+    color: var(--fg); font-size: 11px; line-height: 1.5;
+    box-shadow: 0 30px 80px -40px rgb(0 0 0 / .6);
+  }
+  .sheet a { color: inherit; }
+  .sheet p { margin: 0; }
+  .sheet ul { margin: 0; padding: 0; list-style: none; }
+  .sheet h1, .sheet h2, .sheet h3 { margin: 0; }
+  .sheet section + section { margin-top: 16px; }
+
+  /* ---- header ---- */
+  .r-top { display: flex; align-items: center; justify-content: space-between; font-size: 9.5px; letter-spacing: .12em; color: var(--muted); }
+  .r-top b { color: var(--accent); font-weight: 500; }
+  .r-hero { display: grid; grid-template-columns: 1fr 224px; gap: 26px; align-items: end; margin-top: 8px; }
+  .r-head h1 { font-size: 56px; line-height: 1; letter-spacing: -0.04em; margin-top: 4px; }
+  .r-role { font-size: 14px; color: var(--muted); font-weight: 500; margin-top: 10px !important; }
+  .r-contact { display: flex; flex-wrap: wrap; gap: 6px 8px; margin-top: 14px; font-size: 9.5px; }
+  .r-contact a { padding: 4px 9px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); }
+  .r-contact a:first-child { border-color: var(--accent); color: var(--accent); }
+
+  /* ---- section heads ---- */
+  .sheet h2 {
+    display: flex; align-items: baseline; gap: 8px; font-size: 15px; letter-spacing: -0.01em;
+    padding-bottom: 7px; margin-bottom: 11px; border-bottom: 1px solid var(--border);
+  }
+  .sheet h2 .idx { font-size: 9.5px; font-weight: 400; color: var(--accent); letter-spacing: 0; }
+  .sheet h3 { font-size: 12.5px; letter-spacing: -0.01em; }
+
+  /* ---- columns ---- */
+  .r-main { margin-top: 18px; }
+  .r-main > section + section, .r-tri, .r-tri + section { margin-top: 16px; }
+  .r-duo { display: grid; grid-template-columns: 1.7fr 1fr; gap: 26px; margin-top: 13px; padding-top: 12px; border-top: 1px dashed var(--border); }
+  .r-duo .r-item + .r-item { margin-top: 0; padding-top: 0; border-top: 0; }
+  .r-tri { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
+  .r-tri section + section { margin-top: 0; }
+  .r-lead { font-size: 11.5px; line-height: 1.6; color: var(--muted); text-wrap: pretty; }
+  .r-lead strong { color: var(--fg); font-weight: 600; }
+
+  .r-item + .r-item { margin-top: 14px; padding-top: 13px; border-top: 1px dashed var(--border); }
+  .r-item-head { display: flex; align-items: center; gap: 8px; }
+  .r-item-head .when { margin-left: auto; font-size: 9px; color: var(--muted); }
+  .r-item p { color: var(--muted); margin-top: 6px; text-wrap: pretty; }
+  .flag { font-size: 8px; padding: 2px 6px; border-radius: 999px; background: var(--accent); color: var(--ink); font-weight: 700; letter-spacing: .04em; }
+  .r-sub { font-size: 9px; color: var(--accent); margin-top: 2px; }
+
+  .r-patches { margin-top: 9px !important; display: grid; gap: 7px; }
+  .r-patches li { display: grid; grid-template-columns: 52px 1fr; gap: 10px; color: var(--muted); }
+  .r-patches .sha {
+    font-size: 9px; color: var(--accent); align-self: start; text-align: center;
+    padding: 2px 0; border: 1px solid color-mix(in oklch, var(--accent) 40%, transparent); border-radius: 5px;
+  }
+  .r-patches b { font-size: 9.5px; font-weight: 500; color: var(--fg); margin-right: 3px; }
+  .r-patches .pending .sha { color: var(--muted); border-color: var(--border); border-style: dashed; }
+
+  /* ---- sidebar ---- */
+  .r-term { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); overflow: hidden; font-size: 9px; }
+  .r-term .bar { display: flex; align-items: center; gap: 5px; padding: 7px 10px; border-bottom: 1px solid var(--border); color: var(--muted); }
+  .r-term .bar i { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+  .r-term .bar i.on { background: var(--accent); }
+  .r-term .bar span { margin-left: 6px; }
+  .r-term .body { padding: 9px 10px; line-height: 1.75; }
+  .r-term .sha { color: var(--accent); }
+  .r-term .dim { color: var(--muted); opacity: .75; }
+
+  .r-skill + .r-skill { margin-top: 7px; }
+  .r-skill .k { font-size: 8.5px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 5px; }
+  .r-skill .v { display: flex; flex-wrap: wrap; gap: 4px; }
+  .sheet .tag { font-size: 8.5px; padding: 2px 6px; border-radius: 5px; }
+
+  .r-edu + .r-edu { margin-top: 8px; }
+  .r-edu .when { font-size: 8.5px; color: var(--accent); }
+  .r-edu h3 { font-size: 11.5px; margin-top: 1px; }
+  .r-edu .where { color: var(--muted); font-size: 10px; }
+  .r-edu .award { display: inline-block; margin-top: 4px; font-size: 8.5px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent); }
+
+  .r-awards { display: grid; gap: 5px; }
+  .r-awards li { position: relative; padding-left: 13px; color: var(--muted); font-size: 10.5px; }
+  .r-awards li::before { content: '▸'; position: absolute; left: 0; color: var(--accent); }
+
+  /* ---- sheet 2 ---- */
+  .r-top2 { margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .r-job { display: grid; grid-template-columns: 104px 1fr; gap: 14px; position: relative; padding-bottom: 6px; }
+  .r-job:last-child { padding-bottom: 0; }
+  .r-job .when { font-size: 9px; color: var(--muted); padding-top: 2px; }
+  .r-job .body { position: relative; padding-left: 16px; border-left: 1px solid var(--border); }
+  .r-job .body::before {
+    content: ''; position: absolute; left: -4px; top: 5px; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 0 3px var(--bg);
+  }
+  .r-job ul { margin-top: 5px !important; display: grid; gap: 3px; }
+  .r-job li { position: relative; padding-left: 12px; color: var(--muted); text-wrap: pretty; }
+  .r-job li::before { content: '–'; position: absolute; left: 0; color: var(--border); }
+
+  .r-work { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .r-card { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 11px 12px; display: flex; flex-direction: column; }
+  .r-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
+  .r-card h3 { font-size: 11.5px; line-height: 1.25; }
+  .sheet .pill { font-size: 7.5px; padding: 2px 6px; }
+  .r-card .sub { color: var(--fg); font-size: 9.5px; margin-top: 3px; opacity: .85; }
+  .r-card .meta { font-size: 8px; color: var(--accent); margin-top: 3px; }
+  .r-card p { color: var(--muted); font-size: 10px; line-height: 1.45; margin: 6px 0 8px !important; text-wrap: pretty; }
+  .r-card .tags { margin-top: auto; gap: 4px; }
+
+  .r-personal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .r-proj { display: block; border: 1px dashed var(--border); border-radius: 10px; padding: 10px 12px; }
+  .r-proj .lbl { font-size: 8px; color: var(--accent); }
+  .r-proj h3 { font-size: 11.5px; margin-top: 2px; }
+  .r-proj p { color: var(--muted); font-size: 10px; line-height: 1.45; margin-top: 3px !important; }
+  .sheet h2 .aside { margin-left: auto; font-size: 8.5px; font-weight: 400; color: var(--muted); letter-spacing: 0; }
+
+  /* ---- footer ---- */
+  .r-foot {
+    position: absolute; left: 44px; right: 44px; bottom: 20px;
+    display: flex; justify-content: space-between; font-size: 8px; color: var(--muted); letter-spacing: .08em;
+    padding-top: 8px; border-top: 1px solid var(--border);
+  }
+
+  /* ---- print / PDF: bare sheets, edge to edge ---- */
+  @page { size: A4; margin: 0; }
+  @media print {
+    :global(html), :global(body) { background: var(--bg) !important; }
+    :global(body) { display: block; min-height: 0; }
+    :global(.nav), :global(.foot), :global(.skip-link), .resume-bar { display: none !important; }
+    :global(*) { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .sheets { display: block; padding: 0; }
+    .sheet {
+      zoom: 1; width: 210mm; height: 297mm; border: 0; border-radius: 0; box-shadow: none;
+      break-after: page; break-inside: avoid;
+    }
+    .sheet:last-child { break-after: auto; }
+  }
+</style>

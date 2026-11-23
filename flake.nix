@@ -22,6 +22,11 @@
             pkgs.gh
             pkgs.jq
           ];
+
+          # Chromium for `npm run resume` (renders /resume to the PDF). The npm
+          # playwright-core version must match pkgs.playwright-driver.version.
+          PLAYWRIGHT_BROWSERS_PATH = pkgs.playwright-driver.browsers;
+          PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "true";
         };
       });
     };

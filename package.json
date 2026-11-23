@@ -11,6 +11,7 @@
     "build": "astro build",
     "preview": "astro preview --port 3000",
     "check": "astro check",
+    "resume": "node scripts/resume-pdf.mjs",
     "astro": "astro"
   },
   "dependencies": {
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
+    "playwright-core": "1.64.1",
     "typescript": "^5.9.3"
   }
 }

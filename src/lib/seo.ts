@@ -7,6 +7,9 @@ export const SITE = {
   email: 'yaseen@ghoul.dev',
 } as const;
 
+/** Site-relative path of the résumé PDF, rendered from /resume by `npm run resume`. */
+export const RESUME_PDF = '/Ahmed-Yaseen-Resume.pdf';
+
 export const DEFAULT_TITLE =
   'Ahmed Yaseen (Ghoul) — Linux Kernel Contributor in the Maldives · ghoul.dev';
 export const DEFAULT_DESCRIPTION =

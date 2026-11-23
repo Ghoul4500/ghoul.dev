@@ -4,72 +4,14 @@ import Base from '../layouts/Base.astro';
 import Contributions from '../components/Contributions.astro';
 import { personJsonLd } from '../lib/seo';
 import { formatDate } from '../lib/date';
+import { getStats } from '../lib/stats';
+import { RESUME_PDF } from '../lib/seo';
 
 const posts = (await getCollection('blog'))
   .filter((p) => !p.data.draft)
   .sort((a, b) => b.data.published.valueOf() - a.data.published.valueOf());
 
-const ghHeaders = () => {
-  const token = process.env.GITHUB_TOKEN;
-  return {
-    'User-Agent': 'ghoul.dev-build',
-    Accept: 'application/vnd.github+json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-};
-
-// Live public-repo count at build time so the stat can't silently rot.
-// Falls back to last-known value if the API is unreachable/rate-limited/slow.
-// In CI, GITHUB_TOKEN lifts the 60 req/hr unauthenticated limit on shared IPs.
-let repoCount = 10;
-try {
-  const res = await fetch('https://api.github.com/users/Ghoul4500/repos?per_page=100&type=public', {
-    headers: ghHeaders(),
-    signal: AbortSignal.timeout(5000),
-  });
-  if (res.ok) {
-    const repos = await res.json();
-    if (Array.isArray(repos) && repos.length) {
-      repoCount = repos.filter((r) => !r.fork).length;
-    }
-  }
-} catch {
-  /* keep fallback */
-}
-
-// Patches authored by me in Linus' tree, counted at build time. Fallback 4.
-let kernelPatches = 4;
-try {
-  const res = await fetch(
-    'https://api.github.com/search/commits?q=repo:torvalds/linux+author-email:yaseen@ghoul.dev&per_page=1',
-    { headers: ghHeaders(), signal: AbortSignal.timeout(5000) },
-  );
-  if (res.ok) {
-    const json = await res.json();
-    if (Number.isInteger(json?.total_count) && json.total_count > kernelPatches) {
-      kernelPatches = json.total_count;
-    }
-  }
-} catch {
-  /* keep fallback */
-}
-
-// Latest asusctl release tag, fetched at build time. Fallback is last-known.
-let asusctlRelease = '6.5.0';
-try {
-  const res = await fetch(
-    'https://api.github.com/repos/OpenGamingCollective/asusctl/releases/latest',
-    { headers: ghHeaders(), signal: AbortSignal.timeout(5000) },
-  );
-  if (res.ok) {
-    const json = await res.json();
-    if (typeof json?.tag_name === 'string' && json.tag_name) {
-      asusctlRelease = json.tag_name.replace(/^v/, '');
-    }
-  }
-} catch {
-  /* keep fallback */
-}
+const { repoCount, kernelPatches, asusctlRelease } = await getStats();
 
 const tech = [
   'Rust', 'C', 'TypeScript', 'Go', 'PHP · Laravel', 'Python', 'Linux', 'PostgreSQL', 'Docker',
@@ -95,6 +37,7 @@ const lane = [...tech, ...tech, ...tech];
         <div class="hero-cta">
           <a href="#work" class="btn btn-primary">See the work →</a>
           <a href="mailto:yaseen@ghoul.dev" class="btn btn-ghost">Get in touch</a>
+          <a href={RESUME_PDF} download class="btn btn-ghost">Résumé <span aria-hidden="true">↓</span><span class="visually-hidden"> (PDF download)</span></a>
         </div>
         <div class="hero-meta">
           <span>Malé, Maldives</span>
@@ -153,7 +96,7 @@ const lane = [...tech, ...tech, ...tech];
             <span class="flag">IN MAINLINE</span>
           </div>
           <h3>Upstream Linux kernel</h3>
-          <p>I write C for the kernel's ASUS laptop drivers and USB HID, and my patches are in Linus' mainline tree. A fix for mini-LED handling on 2024+ ASUS hardware (the firmware mapping was wrong, so writes failed). Gating PPT power writes behind the active fan curve, shipped in 7.3. Validation of custom fan curves in asus-wmi, and a usbhid change that skips interrupt polling on devices with no input reports (tagged for stable), both landing in 7.4. One more asus-armoury series, fixing sysfs notifications for grouped attributes, is on the mailing list.</p>
+          <p>I write C for the kernel's ASUS laptop drivers and USB HID, and my patches are in Linus' mainline tree. A fix for mini-LED handling on 2024+ ASUS hardware (the firmware mapping was wrong, so writes failed), in 7.1 and backported to 7.0 stable. Gating PPT power writes behind the active fan curve, shipped in 7.3. Validation of custom fan curves in asus-wmi, and a usbhid change that skips interrupt polling on devices with no input reports (already backported to stable in 7.3.2), both merged for 7.4. One more asus-armoury series, fixing sysfs notifications for grouped attributes, is on the mailing list.</p>
           <div class="tags"><span class="tag">C</span><span class="tag">Linux kernel</span><span class="tag">platform/x86</span><span class="tag">HID</span></div>
           <div class="kernel-links mono">
             <a href="https://github.com/torvalds/linux/commit/d2d2e7c8fb37b27301ee5c8343b2f7037efc6ea6" target="_blank" rel="noopener">mainline commit d2d2e7c <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>

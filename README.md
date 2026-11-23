@@ -28,10 +28,13 @@ src/
   components/      Nav (with theme switcher), Footer, Contributions
   pages/
     index.astro            portfolio homepage
+    resume.astro           résumé (two A4 sheets, source of the PDF)
     blog/index.astro       blog listing
     blog/[...slug].astro   post pages
   styles/global.css    theme system (dark/light + 4 accents) + components
   lib/seo.ts           site constants + JSON-LD
+  lib/stats.ts         build-time GitHub stats shared by homepage + résumé
+scripts/resume-pdf.mjs prints /resume to public/Ahmed-Yaseen-Resume.pdf
 ```
 
 ## Theme
@@ -53,6 +56,20 @@ ssh ghoul.dev 'cd /var/www/ghoul.dev && git pull --ff-only && npm ci && npm run 
 The container's `.env` holds `GH_PAT` (read:user) so the contribution graph includes
 private activity. The GitHub stats are fetched at build time, so they only refresh on a
 rebuild.
+
+## Regenerate the résumé PDF
+
+The "Résumé" buttons download `public/Ahmed-Yaseen-Resume.pdf`, which is printed from
+the `/resume` page with Playwright's Chromium and committed (the homelab build has no
+browser). After editing `src/pages/resume.astro`, re-render it inside the nix dev shell:
+
+```sh
+npm run resume   # builds, prints /resume in the dark theme, writes the PDF
+```
+
+Each sheet is a fixed A4 page, so open the PDF afterwards and check nothing runs under
+the footer. `playwright-core` in package.json must stay on the same version as
+nixpkgs' `playwright-driver`.
 
 ## Regenerate the portfolio OG image
 
