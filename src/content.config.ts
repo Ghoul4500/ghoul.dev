@@ -10,8 +10,8 @@ const blog = defineCollection({
     updated: z.coerce.date().optional(),
     tags: z.array(z.string()).default([]),
     keywords: z.string().optional(),
-    /** Social card image (site-relative). Defaults to the bank-notice card. */
-    image: z.string().default('/og-bank.png'),
+    /** Social card image (site-relative). Defaults to the portfolio card. */
+    image: z.string().default('/og-image.png'),
     /** When true, emit FAQPage JSON-LD from the post's "## Question" headings. */
     faq: z.boolean().default(false),
     /** Short label shown on cards (defaults to title). */

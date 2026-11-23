@@ -12,7 +12,7 @@ export async function GET(context) {
   return rss({
     title: 'ghoul.dev — Writing',
     description:
-      'Writing by Ahmed Yaseen (Ghoul) — notes on the Maldives, banking, Linux and building software.',
+      'Writing by Ahmed Yaseen (Ghoul) — notes on Linux, the kernel and building software.',
     site: context.site,
     items: posts.map((p) => ({
       title: p.data.title,
