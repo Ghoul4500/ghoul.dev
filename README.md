@@ -1,7 +1,7 @@
 # ghoul.dev
 
 Personal portfolio + blog for Ahmed Yaseen (Ghoul). Static [Astro](https://astro.build)
-site, deployed to GitHub Pages on the `ghoul.dev` custom domain.
+site, self-hosted on my homelab behind Caddy and a Cloudflare tunnel.
 
 This repo previously hosted a single-page public notice about two Maldivian banks
 blocking my hosting payments. That notice now lives on as blog posts under `/blog`, and
@@ -19,7 +19,7 @@ npm run preview  # serve the production build
 ## Structure
 
 ```
-public/            static assets (CNAME, favicon, OG images, robots, IndexNow key)
+public/            static assets (favicon, OG images, robots, IndexNow key)
 og-card.html       source for the portfolio OG image (rendered to public/og-image.png)
 src/
   content/blog/    blog posts (Markdown + frontmatter)
@@ -42,9 +42,17 @@ Dark/light and four accent colors (acid, ember, violet, cyan) are driven by
 
 ## Deploy
 
-Pushing to `main` triggers `.github/workflows/deploy.yml`, which builds the site and
-publishes `dist/` to GitHub Pages. Pages must be set to the **GitHub Actions** source
-(Settings → Pages). The `CNAME` file keeps the `ghoul.dev` custom domain.
+The site is served from the `ghoul.dev` homelab container: Caddy serves
+`/var/www/ghoul.dev/dist`, and the ingress container routes the domain to it through a
+Cloudflare tunnel. To deploy, push to `main`, then rebuild on the container:
+
+```sh
+ssh ghoul.dev 'cd /var/www/ghoul.dev && git pull --ff-only && npm ci && npm run build'
+```
+
+The container's `.env` holds `GH_PAT` (read:user) so the contribution graph includes
+private activity. The GitHub stats are fetched at build time, so they only refresh on a
+rebuild.
 
 ## Regenerate the portfolio OG image
 

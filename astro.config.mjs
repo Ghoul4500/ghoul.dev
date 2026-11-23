@@ -2,7 +2,7 @@
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 
-// Static build — deployed to GitHub Pages on the ghoul.dev custom domain.
+// Static build — served by Caddy from the ghoul.dev homelab container.
 // No server adapter: the old SSR portfolio couldn't be hosted anymore, so this
 // is the static, movable replacement.
 export default defineConfig({
