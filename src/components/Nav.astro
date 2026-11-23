@@ -5,8 +5,8 @@ interface Props { home?: boolean }
 const { home = false } = Astro.props;
 const base = home ? '' : '/';
 const links = [
-  { href: `${base}#clients`, label: 'clients' },
   { href: `${base}#work`, label: 'work' },
+  { href: `${base}#clients`, label: 'clients' },
   { href: `${base}#experience`, label: 'experience' },
   { href: `${base}#blog`, label: 'writing' },
 ];

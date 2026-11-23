@@ -11,7 +11,7 @@ export const DEFAULT_TITLE =
   'Ahmed Yaseen (Ghoul) — Linux Kernel Contributor in the Maldives · ghoul.dev';
 export const DEFAULT_DESCRIPTION =
   'A Linux kernel contributor in the Maldives with patches in the mainline tree, ' +
-  'and maintainer of asusctl. Lead engineer at OXIQA, founder of Zenryk, building government platforms in ' +
+  'maintainer of asusctl, and community manager of the Open Gaming Collective. Lead engineer at OXIQA, founder of Zenryk, building government platforms in ' +
   'Rust, Go, C, TypeScript and PHP.';
 
 // JSON-LD person graph for the homepage.
@@ -24,7 +24,7 @@ export function personJsonLd(): object {
     alternateName: ['Ahmed Yaseen', 'Yaseen', 'Ghoul', 'Ghoul4500'],
     url: SITE.url,
     email: `mailto:${SITE.email}`,
-    jobTitle: ['Software Engineer', 'Linux Kernel Contributor', 'asusctl Maintainer'],
+    jobTitle: ['Software Engineer', 'Linux Kernel Contributor', 'asusctl Maintainer', 'Community Manager'],
     image: `${SITE.url}/og-image.png`,
     description: DEFAULT_DESCRIPTION,
     nationality: { '@type': 'Country', name: 'Maldives' },
@@ -33,6 +33,9 @@ export function personJsonLd(): object {
       { '@type': 'Organization', name: 'OXIQA', url: 'https://oxiqa.com' },
       { '@type': 'Organization', name: 'Zenryk', url: 'https://zenryk.com' },
       { '@type': 'Organization', name: 'Synetecs', url: 'https://synetecs.io' },
+    ],
+    memberOf: [
+      { '@type': 'Organization', name: 'Open Gaming Collective', url: 'https://opengamingcollective.org' },
     ],
     knowsAbout: [
       'Linux kernel', 'Linux kernel development', 'C', 'TypeScript', 'Rust', 'Python', 'PHP', 'Go',

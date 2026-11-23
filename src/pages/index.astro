@@ -87,7 +87,8 @@ const lane = [...tech, ...tech, ...tech];
         <h1>I'm <span class="accent">Yaseen</span>,<br />a software engineer.</h1>
         <p class="lead">
           I work close to the metal. {kernelPatches} patches in the mainline <strong>Linux kernel</strong>,
-          and I maintain <strong>asusctl</strong>. Day to day I lead builds for Maldivian government
+          I maintain <strong>asusctl</strong>, and I'm the community manager of the
+          <strong>Open Gaming Collective</strong>. Day to day I lead builds for Maldivian government
           platforms in Laravel, Go and Rust, plus the Linux servers under them. Day job is
           <strong>OXIQA</strong>. I take my own work through <strong>Zenryk</strong>.
         </p>
@@ -112,7 +113,7 @@ const lane = [...tech, ...tech, ...tech];
           </div>
           <div class="term-body">
             <div><span class="prompt">yaseen@ghoul</span><span class="path"> ~ %</span> whoami</div>
-            <div class="out">software engineer · Linux kernel contributor · asusctl maintainer</div>
+            <div class="out">software engineer · Linux kernel contributor<br />asusctl maintainer · OGC community manager</div>
             <div><span class="prompt">yaseen@ghoul</span><span class="path"> ~ %</span> cat stack.txt</div>
             <div class="out">TypeScript&nbsp;&nbsp;Rust&nbsp;&nbsp;C&nbsp;&nbsp;Python&nbsp;&nbsp;PHP&nbsp;&nbsp;Go<br />Laravel&nbsp;&nbsp;Svelte&nbsp;&nbsp;Linux&nbsp;&nbsp;systemd&nbsp;&nbsp;Docker</div>
             <div><span class="prompt">yaseen@ghoul</span><span class="path"> ~ %</span> uptime</div>
@@ -136,10 +137,84 @@ const lane = [...tech, ...tech, ...tech];
     </div>
   </div>
 
-  <!-- CLIENTS -->
-  <section id="clients" class="section" style="padding-top:92px;">
+  <!-- WORK -->
+  <section id="work" class="section" style="padding-top:92px;">
     <div class="section-head">
-      <span class="idx">01 / clients</span>
+      <span class="idx">01 / work</span>
+      <h2>Projects</h2>
+    </div>
+
+    <div class="feature">
+      <div class="feature-grid">
+        <div class="feature-main">
+          <div class="feature-eyebrow">
+            <span class="lang lang-kernel"></span>
+            <span>Linux kernel · platform/x86</span>
+            <span class="flag">IN MAINLINE</span>
+          </div>
+          <h3>Upstream Linux kernel</h3>
+          <p>I write C for the kernel's ASUS laptop drivers and USB HID, and my patches are in Linus' mainline tree. A fix for mini-LED handling on 2024+ ASUS hardware (the firmware mapping was wrong, so writes failed). Gating PPT power writes behind the active fan curve, shipped in 7.3. Validation of custom fan curves in asus-wmi, and a usbhid change that skips interrupt polling on devices with no input reports (tagged for stable), both landing in 7.4. One more asus-armoury series, fixing sysfs notifications for grouped attributes, is on the mailing list.</p>
+          <div class="tags"><span class="tag">C</span><span class="tag">Linux kernel</span><span class="tag">platform/x86</span><span class="tag">HID</span></div>
+          <div class="kernel-links mono">
+            <a href="https://github.com/torvalds/linux/commit/d2d2e7c8fb37b27301ee5c8343b2f7037efc6ea6" target="_blank" rel="noopener">mainline commit d2d2e7c <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+            <a href="https://github.com/torvalds/linux/commit/7bc99dff4d97" target="_blank" rel="noopener">7bc99df <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+            <a href="https://github.com/torvalds/linux/commit/bcbdfe03566a" target="_blank" rel="noopener">bcbdfe0 <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+            <a href="https://github.com/torvalds/linux/commit/4563e596bd91" target="_blank" rel="noopener">4563e59 <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+            <a href="https://lore.kernel.org/all/?q=f:yaseen@ghoul.dev" target="_blank" rel="noopener">all patches on lore <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+          </div>
+        </div>
+        <div class="gitlog">
+          <div class="head"><span class="sha">$</span> git log --oneline --author=yaseen@ghoul.dev</div>
+          <div style="margin-top:8px;"><span class="sha">4563e59</span> usbhid: skip polling, no input reports</div>
+          <div><span class="sha">bcbdfe0</span> asus-wmi: validate custom fan curves</div>
+          <div><span class="sha">7bc99df</span> asus-armoury: gate PPT on fan curve</div>
+          <div><span class="sha">d2d2e7c</span> asus-armoury: fix mini-LED MODE2</div>
+          <div style="opacity:.6;margin-top:2px;"># all in mainline (Torvalds tree)</div>
+          <div style="margin-top:8px;color:var(--muted);">~ on the list · Aug 2026 ~</div>
+          <div><span class="sha">·····</span> asus-armoury: grouped attr notify</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="subhead">Personal &amp; open-source projects</div>
+    <div class="proj-grid">
+      <a href="https://github.com/OpenGamingCollective/asusctl" target="_blank" rel="noopener" class="proj">
+        <div class="proj-eyebrow"><span class="lang lang-rust"></span><span class="lbl">Rust · maintainer</span></div>
+        <h4>asusctl</h4>
+        <p>The Rust daemon that makes ASUS ROG laptops work on Linux. I maintain it and cut its releases. Along the way I added Scar 18 2025 support, rebuilt the AniMe Matrix image/GIF pipeline, and fixed PPT power-tuning races.</p>
+        <span class="visually-hidden">(opens in a new tab)</span>
+      </a>
+      <a href="https://github.com/OpenGamingCollective" target="_blank" rel="noopener" class="proj">
+        <div class="proj-eyebrow"><span class="lang lang-kernel"></span><span class="lbl">Community · infrastructure</span></div>
+        <h4>Open Gaming Collective</h4>
+        <p>Community manager and org admin. I run the collective's GitHub infrastructure and am building its Discord and mailing-list infrastructure. Declarative DNS is next.</p>
+        <span class="visually-hidden">(opens in a new tab)</span>
+      </a>
+      <a href="https://github.com/Ghoul4500/autoclaude" target="_blank" rel="noopener" class="proj">
+        <div class="proj-eyebrow"><span class="lang lang-node"></span><span class="lbl">Node · agentic</span></div>
+        <h4>autoclaude</h4>
+        <p>A local agent that picks up GitHub issues, runs Claude CLI in a sandbox, and opens a PR with the fix.</p>
+        <span class="visually-hidden">(opens in a new tab)</span>
+      </a>
+      <a href="https://github.com/Ghoul4500/hisaab" target="_blank" rel="noopener" class="proj">
+        <div class="proj-eyebrow"><span class="lang lang-ts"></span><span class="lbl">TypeScript · local-first</span></div>
+        <h4>hisaab</h4>
+        <p>Browser-only analytics for a Maldives Islamic Bank statement: spending, wealth over time, and a nisab/hawl zakat tracker. Nothing leaves your machine.</p>
+        <span class="visually-hidden">(opens in a new tab)</span>
+      </a>
+    </div>
+    <div class="also">
+      <span class="lbl">also contributing at</span>
+      <span class="chip">asus-linux</span>
+      <span class="chip">caelestia-dots</span>
+      <a href="https://github.com/Ghoul4500" target="_blank" rel="noopener" class="accent mono" style="font-size:12px;margin-left:4px;">github.com/Ghoul4500 <span aria-hidden="true">→</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+    </div>
+  </section>
+
+  <!-- CLIENTS -->
+  <section id="clients" class="section">
+    <div class="section-head">
+      <span class="idx">02 / clients</span>
       <h2>Who I've built for</h2>
     </div>
     <p class="lead-text">
@@ -204,7 +279,7 @@ const lane = [...tech, ...tech, ...tech];
   <!-- SERVICES -->
   <section id="services" class="section">
     <div class="section-head">
-      <span class="idx">02 / services</span>
+      <span class="idx">03 / services</span>
       <h2>What I build</h2>
     </div>
     <div class="svc-grid">
@@ -214,75 +289,6 @@ const lane = [...tech, ...tech, ...tech];
       <div class="svc"><div class="num">04</div><h3>Bots &amp; automation</h3><p>Discord and Telegram bots, plus automation between systems. Glue that runs without a human in the loop.</p></div>
       <div class="svc"><div class="num">05</div><h3>Linux &amp; low-level</h3><p>Rust and C, down to the kernel. {kernelPatches} patches in mainline Linux, and I maintain the asusctl daemon.</p></div>
       <div class="svc dashed"><h3>Something else?</h3><p>If it's technical, get in touch. I'm probably interested.</p><a href="mailto:yaseen@ghoul.dev">→ Tell me about it</a></div>
-    </div>
-  </section>
-
-  <!-- WORK -->
-  <section id="work" class="section">
-    <div class="section-head">
-      <span class="idx">03 / work</span>
-      <h2>Projects</h2>
-    </div>
-
-    <div class="feature">
-      <div class="feature-grid">
-        <div class="feature-main">
-          <div class="feature-eyebrow">
-            <span class="lang lang-kernel"></span>
-            <span>Linux kernel · platform/x86</span>
-            <span class="flag">IN MAINLINE</span>
-          </div>
-          <h3>Upstream Linux kernel</h3>
-          <p>I write C for the kernel's ASUS laptop drivers and USB HID, and my patches are in Linus' mainline tree. A fix for mini-LED handling on 2024+ ASUS hardware (the firmware mapping was wrong, so writes failed). Gating PPT power writes behind the active fan curve, shipped in 7.3. Validation of custom fan curves in asus-wmi, and a usbhid change that skips interrupt polling on devices with no input reports (tagged for stable), both landing in 7.4. One more asus-armoury series, fixing sysfs notifications for grouped attributes, is on the mailing list.</p>
-          <div class="tags"><span class="tag">C</span><span class="tag">Linux kernel</span><span class="tag">platform/x86</span><span class="tag">HID</span></div>
-          <div class="kernel-links mono">
-            <a href="https://github.com/torvalds/linux/commit/d2d2e7c8fb37b27301ee5c8343b2f7037efc6ea6" target="_blank" rel="noopener">mainline commit d2d2e7c <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
-            <a href="https://github.com/torvalds/linux/commit/7bc99dff4d97" target="_blank" rel="noopener">7bc99df <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
-            <a href="https://github.com/torvalds/linux/commit/bcbdfe03566a" target="_blank" rel="noopener">bcbdfe0 <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
-            <a href="https://github.com/torvalds/linux/commit/4563e596bd91" target="_blank" rel="noopener">4563e59 <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
-            <a href="https://lore.kernel.org/all/?q=f:yaseen@ghoul.dev" target="_blank" rel="noopener">all patches on lore <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
-          </div>
-        </div>
-        <div class="gitlog">
-          <div class="head"><span class="sha">$</span> git log --oneline --author=yaseen@ghoul.dev</div>
-          <div style="margin-top:8px;"><span class="sha">4563e59</span> usbhid: skip polling, no input reports</div>
-          <div><span class="sha">bcbdfe0</span> asus-wmi: validate custom fan curves</div>
-          <div><span class="sha">7bc99df</span> asus-armoury: gate PPT on fan curve</div>
-          <div><span class="sha">d2d2e7c</span> asus-armoury: fix mini-LED MODE2</div>
-          <div style="opacity:.6;margin-top:2px;"># all in mainline (Torvalds tree)</div>
-          <div style="margin-top:8px;color:var(--muted);">~ on the list · Aug 2026 ~</div>
-          <div><span class="sha">·····</span> asus-armoury: grouped attr notify</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="subhead">Personal &amp; open-source projects</div>
-    <div class="proj-grid">
-      <a href="https://github.com/OpenGamingCollective/asusctl" target="_blank" rel="noopener" class="proj">
-        <div class="proj-eyebrow"><span class="lang lang-rust"></span><span class="lbl">Rust · maintainer</span></div>
-        <h4>asusctl</h4>
-        <p>The Rust daemon that makes ASUS ROG laptops work on Linux. I maintain it and cut its releases. Along the way I added Scar 18 2025 support, rebuilt the AniMe Matrix image/GIF pipeline, and fixed PPT power-tuning races.</p>
-        <span class="visually-hidden">(opens in a new tab)</span>
-      </a>
-      <a href="https://github.com/Ghoul4500/autoclaude" target="_blank" rel="noopener" class="proj">
-        <div class="proj-eyebrow"><span class="lang lang-node"></span><span class="lbl">Node · agentic</span></div>
-        <h4>autoclaude</h4>
-        <p>A local agent that picks up GitHub issues, runs Claude CLI in a sandbox, and opens a PR with the fix.</p>
-        <span class="visually-hidden">(opens in a new tab)</span>
-      </a>
-      <a href="https://github.com/Ghoul4500/hisaab" target="_blank" rel="noopener" class="proj">
-        <div class="proj-eyebrow"><span class="lang lang-ts"></span><span class="lbl">TypeScript · local-first</span></div>
-        <h4>hisaab</h4>
-        <p>Browser-only analytics for a Maldives Islamic Bank statement: spending, wealth over time, and a nisab/hawl zakat tracker. Nothing leaves your machine.</p>
-        <span class="visually-hidden">(opens in a new tab)</span>
-      </a>
-    </div>
-    <div class="also">
-      <span class="lbl">also contributing at</span>
-      <span class="chip">Open Gaming Collective</span>
-      <span class="chip">asus-linux</span>
-      <span class="chip">caelestia-dots</span>
-      <a href="https://github.com/Ghoul4500" target="_blank" rel="noopener" class="accent mono" style="font-size:12px;margin-left:4px;">github.com/Ghoul4500 <span aria-hidden="true">→</span><span class="visually-hidden"> (opens in a new tab)</span></a>
     </div>
   </section>
 
@@ -305,8 +311,8 @@ const lane = [...tech, ...tech, ...tech];
       </div>
       <div class="tl-item"><span class="node"></span>
         <div class="tl-period">2026 — now</div>
-        <div class="tl-body"><h3>Linux upstream · asus-linux · OGC</h3><div class="tl-role">Kernel Contributor · asusctl Maintainer</div>
-          <p>Kernel patches for the platform/x86 ASUS drivers and USB HID. Maintainer of the asusctl daemon, plus tooling for the Open Gaming Collective.</p></div>
+        <div class="tl-body"><h3>Linux upstream · asus-linux · OGC</h3><div class="tl-role">Kernel Contributor · asusctl Maintainer · OGC Community Manager</div>
+          <p>Kernel patches for the platform/x86 ASUS drivers and USB HID. Maintainer of the asusctl daemon. Community manager and admin at the Open Gaming Collective, where I run the GitHub infrastructure and am building the Discord and mailing-list infrastructure.</p></div>
       </div>
       <div class="tl-item past"><span class="node"></span>
         <div class="tl-period">2023 — 2025</div>
