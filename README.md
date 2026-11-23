@@ -1,7 +1,6 @@
 # ghoul.dev
 
-My portfolio, résumé and blog. A static [Astro](https://astro.build) site, self-hosted
-on my homelab behind Caddy and a Cloudflare tunnel.
+My portfolio, résumé and blog. A static [Astro](https://astro.build) site.
 
 ```sh
 npm install

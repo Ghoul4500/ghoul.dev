@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { RESUME_PDF } from './seo';
 
-// Download link for the résumé PDF with a content hash appended. Cloudflare and
+// Download link for the résumé PDF with a content hash appended. The CDN and
 // browsers cache the PDF for hours, so without this a freshly rendered résumé
 // keeps downloading as the old one.
 function versioned(): string {
