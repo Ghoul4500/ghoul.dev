@@ -207,6 +207,9 @@ img { max-width: 100%; display: block; }
 .term-body .prompt { color: var(--accent); }
 .term-body .path { color: var(--muted); }
 .term-body .out { color: var(--muted); margin-bottom: 12px; }
+.term-log { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; color: var(--muted); line-height: 1.55; }
+.term-log li { display: grid; grid-template-columns: 7ch 1fr; gap: 1.5ch; }
+.term-log a:hover { text-decoration: underline; }
 .term-body .cursor { display: inline-block; width: 9px; height: 17px; background: var(--accent); vertical-align: -3px; animation: blink 1.1s step-end infinite; }
 
 /* ---- marquee ------------------------------------------------------------ */
@@ -258,6 +261,12 @@ img { max-width: 100%; display: block; }
 .gitlog { flex: 0 1 320px; min-width: min(260px, 100%); font-family: var(--mono); font-size: 12.5px; line-height: 1.85; color: var(--muted); background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
 .gitlog .sha { color: var(--accent); }
 .gitlog .head { color: var(--fg); }
+.patches { list-style: none; margin: 8px 0 22px; padding: 0; display: grid; gap: 14px; }
+.patches li { display: grid; grid-template-columns: 74px 1fr; gap: 16px; color: var(--muted); font-size: 15px; line-height: 1.6; text-wrap: pretty; }
+.patches .sha { align-self: start; margin-top: 2px; font-family: var(--mono); font-size: 12px; text-align: center; padding: 2px 0; border-radius: 6px; color: var(--accent); border: 1px solid color-mix(in oklch, var(--accent) 40%, transparent); }
+.patches .sha:hover { border-color: var(--accent); }
+.patches b { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--fg); margin-right: 6px; }
+.patches .pending .sha { color: var(--muted); border: 1px dashed var(--border); }
 .kernel-links { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; }
 .kernel-links a { color: var(--accent); border-bottom: 1px solid color-mix(in oklch, var(--accent) 35%, transparent); padding-bottom: 1px; }
 .kernel-links a:hover { border-bottom-color: var(--accent); }

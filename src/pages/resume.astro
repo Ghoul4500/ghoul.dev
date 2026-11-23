@@ -5,6 +5,7 @@
 import Base from '../layouts/Base.astro';
 import { getStats } from '../lib/stats';
 import { RESUME_HREF } from '../lib/resume';
+import { patches, pending, LORE, commitUrl } from '../lib/patches';
 
 const { asusctlRelease } = await getStats();
 
@@ -15,26 +16,6 @@ const contact = [
   { label: 'ghoul.dev', href: 'https://ghoul.dev' },
   { label: 'github.com/Ghoul4500', href: 'https://github.com/Ghoul4500' },
   { label: 'gitlab.com/Ghoul4500', href: 'https://gitlab.com/Ghoul4500' },
-];
-
-const commit = (sha: string) => `https://github.com/torvalds/linux/commit/${sha}`;
-const patches = [
-  {
-    sha: 'd2d2e7c', href: commit('d2d2e7c8fb37b27301ee5c8343b2f7037efc6ea6'), area: 'asus-armoury',
-    text: 'Fixed mini-LED mode get/set on 2024+ hardware. Reads decoded a constant instead of the device value, and writes skipped the firmware mode map. In 7.1, backported to 7.0 stable.',
-  },
-  {
-    sha: '7bc99df', href: commit('7bc99dff4d97'), area: 'asus-armoury',
-    text: 'Gated PPT power-limit writes behind an active custom fan curve on the 30 models where firmware silently ignored them. Shipped in 7.3.',
-  },
-  {
-    sha: 'bcbdfe0', href: commit('bcbdfe03566a'), area: 'asus-wmi',
-    text: 'Validate custom fan curves on enable, rejecting curves the firmware does not honour so sysfs keeps describing what the fans do. Merged for 7.4; backported to 7.3, 6.18, 6.12, 6.6 and 6.1 stable.',
-  },
-  {
-    sha: '4563e59', href: commit('4563e596bd91'), area: 'usbhid',
-    text: 'Skip interrupt polling on devices with no input reports, fixing dropped and stuck keys on ASUS ROG keyboards. Merged for 7.4, backported to stable in 7.3.2.',
-  },
 ];
 
 const skills = [
@@ -59,7 +40,7 @@ const awards = [
 
 const jobs = [
   {
-    when: 'Feb 2025 — now', org: 'OXIQA', role: 'Full-stack Engineer · lead developer',
+    when: 'Feb 2025 — now', org: 'OXIQA', role: 'Lead Platform Engineer',
     points: [
       'Lead developer on platforms for government ministries and product teams: the APIs, the frontends, the Linux servers under them, and the deployment and infrastructure decisions.',
     ],
@@ -106,10 +87,6 @@ const work = [
 ];
 
 const personal = [
-  { name: 'autoclaude', lbl: 'Node · agentic', href: 'https://github.com/Ghoul4500/autoclaude',
-    text: 'Picks up GitHub issues, runs Claude CLI in a sandbox, opens a PR.' },
-  { name: 'hisaab', lbl: 'TypeScript · local-first', href: 'https://github.com/Ghoul4500/hisaab',
-    text: 'Browser-only bank statement analytics with a nisab/hawl zakat tracker.' },
   { name: 'How I got started as an ASUS Linux dev', lbl: 'Writing · ghoul.dev/blog', href: 'https://ghoul.dev/blog/how-i-got-started-as-an-asus-linux-dev/',
     text: 'From a bricked lightbar to asusctl and the Open Gaming Collective.' },
 ];
@@ -142,7 +119,7 @@ const personal = [
       <div class="r-term mono">
         <div class="bar"><i></i><i></i><i class="on"></i><span>git log --oneline · mainline</span></div>
         <div class="body">
-          {[...patches].reverse().map((p) => (
+          {patches.map((p) => (
             <div><span class="sha">{p.sha}</span> {p.area}</div>
           ))}
         </div>
@@ -157,11 +134,10 @@ const personal = [
           <section>
             <h2><span class="idx mono">01 /</span> Profile</h2>
             <p class="r-lead">
-              I work close to the metal. I write C for the Linux kernel's ASUS platform drivers and USB HID,
-              maintain <strong>asusctl</strong>, the Rust daemon that makes ASUS ROG laptops work on Linux, and
-              handle infrastructure and community for the <strong>Open Gaming Collective</strong>. Day to day I
-              lead builds of Maldivian government platforms in Laravel, Go and Rust, plus the Linux servers
-              under them.
+              Maintainer of <strong>asusctl</strong>, community manager of the
+              <strong>Open Gaming Collective</strong>, active <strong>Linux kernel</strong> contributor. Lead
+              Platform Engineer at <strong>OXIQA</strong>, building government platforms for the Maldives.
+              Freelance through <strong>Zenryk</strong>.
             </p>
           </section>
 
@@ -178,14 +154,16 @@ const personal = [
               <ul class="r-patches">
                 {patches.map((p) => (
                   <li>
-                    <a class="sha mono" href={p.href}>{p.sha}</a>
+                    <a class="sha mono" href={commitUrl(p)}>{p.sha}</a>
                     <span><b class="mono">{p.area}</b> {p.text}</span>
                   </li>
                 ))}
-                <li class="pending">
-                  <a class="sha mono" href="https://lore.kernel.org/all/?q=f:yaseen@ghoul.dev">on list</a>
-                  <span><b class="mono">asus-armoury</b> Two-patch series fixing sysfs notifications and pending_reboot for grouped attributes.</span>
-                </li>
+                {pending.map((p) => (
+                  <li class="pending">
+                    <a class="sha mono" href={LORE}>on list</a>
+                    <span><b class="mono">{p.area}</b> {p.text}</span>
+                  </li>
+                ))}
               </ul>
             </div>
 
@@ -197,8 +175,8 @@ const personal = [
               </div>
               <div class="r-sub mono">Rust · Open Gaming Collective · v{asusctlRelease}</div>
               <p>
-                I maintain the daemon and cut its releases. Along the way I added Scar 18 2025 support, rebuilt
-                the AniMe Matrix image/GIF pipeline, and fixed PPT power-tuning races.
+                I maintain the daemon and cut its releases. Added Scar 18 2025 support, rebuilt the AniMe
+                Matrix image/GIF pipeline, fixed PPT power-tuning races.
               </p>
             </div>
 
@@ -287,7 +265,7 @@ const personal = [
       </div>
 
       <section>
-        <h2><span class="idx mono">08 /</span> Projects &amp; writing <span class="aside mono">off hours: chess · gym · 3D modelling · games</span></h2>
+        <h2><span class="idx mono">08 /</span> Writing <span class="aside mono">off hours: chess · gym · 3D modelling · games</span></h2>
         <div class="r-personal">
           {personal.map((p) => (
             <a class="r-proj" href={p.href}>

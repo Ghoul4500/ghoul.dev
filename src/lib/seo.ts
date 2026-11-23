@@ -14,7 +14,7 @@ export const DEFAULT_TITLE =
   'Ahmed Yaseen (Ghoul) — Linux Kernel Contributor in the Maldives · ghoul.dev';
 export const DEFAULT_DESCRIPTION =
   'A Linux kernel contributor in the Maldives with patches in the mainline tree, ' +
-  'maintainer of asusctl, and community manager of the Open Gaming Collective. Lead engineer at OXIQA, founder of Zenryk, building government platforms in ' +
+  'maintainer of asusctl, and community manager of the Open Gaming Collective. Lead Platform Engineer at OXIQA, founder of Zenryk, building government platforms in ' +
   'Rust, Go, C, TypeScript and PHP.';
 
 // JSON-LD person graph for the homepage.
