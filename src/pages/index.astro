@@ -6,13 +6,17 @@ import { personJsonLd } from '../lib/seo';
 import { formatDate } from '../lib/date';
 import { getStats } from '../lib/stats';
 import { patches, pending, LORE, commitUrl } from '../lib/patches';
-import { jobs, work } from '../lib/work';
+import { jobs, work, isCurrent, yearsInSoftware } from '../lib/work';
+import { summary, asusctl as asusctlInfo, ogc, education, hasTags } from '../lib/cv';
 
 const posts = (await getCollection('blog'))
   .filter((p) => !p.data.draft)
   .sort((a, b) => b.data.published.valueOf() - a.data.published.valueOf());
 
-const { repoCount, kernelPatches, asusctlRelease } = await getStats();
+const { repoCount, kernelPatches, asusctlRelease, asusctlStars } = await getStats();
+const years = yearsInSoftware();
+const profile = summary(kernelPatches);
+const asusctl = asusctlInfo(asusctlStars);
 
 const tech = [
   'Rust', 'C', 'TypeScript', 'Go', 'PHP · Laravel', 'Python', 'Linux', 'PostgreSQL', 'Docker',
@@ -28,12 +32,7 @@ const lane = [...tech, ...tech, ...tech];
       <div class="hero-copy">
         <div class="badge"><span class="live"></span>{kernelPatches} PATCHES IN THE MAINLINE LINUX KERNEL</div>
         <h1>I'm <span class="accent">Yaseen</span>,<br />a software engineer.</h1>
-        <p class="lead">
-          Maintainer of <strong>asusctl</strong>, community manager of the
-          <strong>Open Gaming Collective</strong>, active <strong>Linux kernel</strong> contributor.
-          Lead Platform Engineer at <strong>OXIQA</strong>, building government platforms for
-          the Maldives. Freelance through <strong>Zenryk</strong>.
-        </p>
+        <p class="lead">{profile.map((r) => (r.b ? <strong>{r.t}</strong> : r.t))}</p>
         <div class="hero-cta">
           <a href="#work" class="btn btn-primary">See the work →</a>
           <a href="mailto:yaseen@ghoul.dev" class="btn btn-ghost">Get in touch</a>
@@ -123,13 +122,13 @@ const lane = [...tech, ...tech, ...tech];
       <a href="https://github.com/OpenGamingCollective/asusctl" target="_blank" rel="noopener" class="proj">
         <div class="proj-eyebrow"><span class="lang lang-rust"></span><span class="lbl">Rust · maintainer</span></div>
         <h4>asusctl</h4>
-        <p>Maintainer. asusctl is the daemon that controls fan curves, power limits, keyboard lighting and the AniMe Matrix display on ASUS ROG laptops under Linux. I review contributions and handle the releases. My own work in it includes support for the Scar 18 2025 and a rewrite of the AniMe Matrix image and GIF handling.</p>
+        <p>{asusctl.text}</p>
         <span class="visually-hidden">(opens in a new tab)</span>
       </a>
       <a href="https://github.com/OpenGamingCollective" target="_blank" rel="noopener" class="proj">
         <div class="proj-eyebrow"><span class="lang lang-kernel"></span><span class="lbl">Community · infrastructure</span></div>
         <h4>Open Gaming Collective</h4>
-        <p>Community manager and org admin. I handle the collective's infrastructure and its community.</p>
+        <p>{ogc.role}. {ogc.text}</p>
         <span class="visually-hidden">(opens in a new tab)</span>
       </a>
     </div>
@@ -179,20 +178,20 @@ const lane = [...tech, ...tech, ...tech];
       <h2>Where I've worked</h2>
     </div>
     <div class="timeline">
-      {jobs.filter((j) => j.when.includes('now')).map((j) => (
-        <div class={`tl-item${j.when.includes('now') ? '' : ' past'}`}><span class="node"></span>
+      {jobs.filter(isCurrent).map((j) => (
+        <div class="tl-item"><span class="node"></span>
           <div class="tl-period">{j.when}</div>
           <div class="tl-body"><h3>{j.org}</h3><div class="tl-role">{j.role}</div>
             {j.points.map((p) => <p>{p}</p>)}</div>
         </div>
       ))}
       <div class="tl-item"><span class="node"></span>
-        <div class="tl-period">2026 — now</div>
+        <div class="tl-period">2026 – Present</div>
         <div class="tl-body"><h3>Linux upstream · asus-linux · OGC</h3><div class="tl-role">Kernel Contributor · asusctl Maintainer · OGC Community Manager</div>
-          <p>Patches for the platform/x86 ASUS drivers and USB HID. I maintain asusctl, and handle infrastructure and community at the Open Gaming Collective.</p></div>
+          <p>{kernelPatches} patches merged in the mainline kernel, in USB HID and the ASUS platform/x86 drivers, most backported to stable. I maintain asusctl, and run the Open Gaming Collective's GitHub organisation, governance bot and community.</p></div>
       </div>
-      {jobs.filter((j) => !j.when.includes('now')).map((j) => (
-        <div class={`tl-item${j.when.includes('now') ? '' : ' past'}`}><span class="node"></span>
+      {jobs.filter((j) => !isCurrent(j)).map((j) => (
+        <div class="tl-item past"><span class="node"></span>
           <div class="tl-period">{j.when}</div>
           <div class="tl-body"><h3>{j.org}</h3><div class="tl-role">{j.role}</div>
             {j.points.map((p) => <p>{p}</p>)}</div>
@@ -211,7 +210,7 @@ const lane = [...tech, ...tech, ...tech];
       <div class="stat"><div class="n">{kernelPatches}</div><div class="l">patches in the mainline kernel</div></div>
       <div class="stat"><div class="n">{asusctlRelease}</div><div class="l">latest asusctl release · maintainer</div></div>
       <div class="stat"><div class="n">{repoCount}</div><div class="l">public repositories</div></div>
-      <div class="stat"><div class="n">2021</div><div class="l">working since</div></div>
+      <div class="stat"><div class="n">{years}+</div><div class="l">years building software</div></div>
     </div>
     <Contributions />
   </section>
@@ -223,23 +222,20 @@ const lane = [...tech, ...tech, ...tech];
       <h2>Education</h2>
     </div>
     <div class="edu-grid">
-      <div class="edu">
-        <div class="when">2022 — 2025</div>
-        <h3>BSc (Hons) Computer Science</h3>
-        <div class="where">UWE Bristol · Villa College</div>
-        <div class="tags"><span class="award-fill">College Medal · top of cohort</span><span class="award">First Class Honours</span></div>
-      </div>
-      <div class="edu">
-        <div class="when">2021</div>
-        <h3>Foundation in Engineering</h3>
-        <div class="where last">Villa College</div>
-      </div>
-      <div class="edu">
-        <div class="when">2019</div>
-        <h3>O Levels</h3>
-        <div class="where">M.Atoll School</div>
-        <span class="award">National Top 7</span>
-      </div>
+      {education.map((e) => (
+        <div class="edu">
+          <div class="when">{e.when}</div>
+          <h3>{e.what}</h3>
+          <div class={`where${hasTags(e) ? '' : ' last'}`}>{e.where}</div>
+          {hasTags(e) && (
+            <div class="tags">
+              {e.result && <span class="award-fill">{e.result}</span>}
+              {e.topAward && <span class="award-top">{e.topAward}</span>}
+              {e.awards?.map((a) => <span class="award">{a}</span>)}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   </section>
 

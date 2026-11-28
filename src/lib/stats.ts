@@ -28,16 +28,22 @@ export interface Stats {
   kernelPatches: number;
   /** Latest asusctl release tag, without the leading "v". */
   asusctlRelease: string;
+  asusctlStars: number;
 }
 
 async function load(): Promise<Stats> {
-  const stats: Stats = { repoCount: 10, kernelPatches: 4, asusctlRelease: '6.5.0' };
+  const stats: Stats = { repoCount: 10, kernelPatches: 4, asusctlRelease: '6.5.0', asusctlStars: 700 };
 
-  const [repos, commits, release] = await Promise.all([
+  const [repos, commits, release, asusctl] = await Promise.all([
     gh('https://api.github.com/users/Ghoul4500/repos?per_page=100&type=public'),
     gh('https://api.github.com/search/commits?q=repo:torvalds/linux+author-email:yaseen@ghoul.dev&per_page=1'),
     gh('https://api.github.com/repos/OpenGamingCollective/asusctl/releases/latest'),
+    gh('https://api.github.com/repos/OpenGamingCollective/asusctl'),
   ]);
+
+  if (Number.isInteger(asusctl?.stargazers_count) && asusctl.stargazers_count > stats.asusctlStars) {
+    stats.asusctlStars = asusctl.stargazers_count;
+  }
 
   if (Array.isArray(repos) && repos.length) {
     stats.repoCount = repos.filter((r: any) => !r.fork).length;

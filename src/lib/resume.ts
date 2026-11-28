@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { RESUME_PDF, RESUME_PDF_LIGHT } from './seo';
+import { RESUME_PDF, RESUME_PDF_LIGHT, RESUME_PDF_PLAIN } from './seo';
 
 // Download link for the résumé PDF with a content hash appended. The CDN and
 // browsers cache the PDF for hours, so without this a freshly rendered résumé
@@ -17,3 +17,4 @@ function versioned(path: string): string {
 
 export const RESUME_HREF = versioned(RESUME_PDF);
 export const RESUME_HREF_LIGHT = versioned(RESUME_PDF_LIGHT);
+export const RESUME_HREF_PLAIN = versioned(RESUME_PDF_PLAIN);

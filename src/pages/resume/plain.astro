@@ -1,0 +1,133 @@
+---
+// Plain, single-column résumé for job portals, printed by `npm run resume`.
+import { getStats } from '../../lib/stats';
+import { patches, pending, LORE, commitUrl } from '../../lib/patches';
+import { jobs } from '../../lib/work';
+import {
+  NAME, HEADLINE, LOCATION, contact, summary, plain, asusctl, ogc, skills, education, allAwards, awards,
+} from '../../lib/cv';
+
+const { asusctlStars, kernelPatches } = await getStats();
+const profile = plain(summary(kernelPatches));
+---
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>{NAME} – Résumé</title>
+  <link rel="canonical" href="https://ghoul.dev/resume/" />
+</head>
+<body>
+  <main>
+    <header>
+      <h1>{NAME}</h1>
+      <p class="headline">{HEADLINE}</p>
+      <p class="contact">{contact.map((c) => c.label).join(' | ')}</p>
+      <p class="contact">{LOCATION}</p>
+    </header>
+
+    <section>
+      <h2>Summary</h2>
+      <p>{profile}</p>
+    </section>
+
+    <section>
+      <h2>Experience</h2>
+      {jobs.map((j) => (
+        <div class="entry">
+          <div class="row"><h3>{j.role}, {j.org}</h3><span>{j.when}</span></div>
+          <ul>{j.points.map((p) => <li>{p}</li>)}</ul>
+        </div>
+      ))}
+    </section>
+
+    <section>
+      <h2>Open Source Experience</h2>
+      <div class="entry">
+        <div class="row"><h3>Linux Kernel Contributor, upstream Linux kernel</h3><span>2026 – Present</span></div>
+        <ul>
+          <li>
+            {kernelPatches} patches merged in the mainline Linux kernel, in the USB HID subsystem and the ASUS
+            platform/x86 drivers, written in C and reviewed on the public kernel mailing lists. Most were backported
+            to stable kernels.
+          </li>
+          {patches.map((p, i) => (
+            <li>
+              {p.area}: {i === 0 ? p.text : (p.short ?? p.text)} Commit {p.sha}:{' '}
+              <a href={commitUrl(p)}>{commitUrl(p).replace('https://', '')}</a>
+            </li>
+          ))}
+          {pending.map((p) => <li>Under review ({p.area}): {p.text}</li>)}
+          <li>All patches: <a href={LORE}>{LORE.replace('https://', '')}</a></li>
+        </ul>
+      </div>
+      {[asusctl(asusctlStars), ogc].map((o) => (
+        <div class="entry">
+          <div class="row"><h3>{o.role}, {o.name}</h3><span>{o.when}</span></div>
+          <ul><li>{o.text}</li></ul>
+        </div>
+      ))}
+    </section>
+
+    <section>
+      <h2>Skills</h2>
+      <ul class="skills">
+        {skills.map((s) => <li><strong>{s.k}:</strong> {s.v.join(', ')}</li>)}
+      </ul>
+    </section>
+
+    <section>
+      <h2>Education</h2>
+      {education.map((e) => (
+        <div class="entry">
+          <div class="row"><h3>{e.what}{e.result ? `, ${e.result}` : ''}</h3><span>{e.when}</span></div>
+          <p>{e.where}</p>
+          {allAwards(e).length > 0 && <p>Awards: {allAwards(e).map((a) => a.replace(' · ', ', ')).join('; ')}</p>}
+        </div>
+      ))}
+    </section>
+
+    <section>
+      <h2>Awards</h2>
+      <ul>{awards.map((a) => <li>{a}</li>)}</ul>
+    </section>
+  </main>
+</body>
+</html>
+
+<style is:global>
+  @font-face { font-family: 'Space Grotesk'; font-weight: 400; src: url('/fonts/space-grotesk-latin-400-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Space Grotesk'; font-weight: 600; src: url('/fonts/space-grotesk-latin-600-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Space Grotesk'; font-weight: 700; src: url('/fonts/space-grotesk-latin-700-normal.woff2') format('woff2'); }
+
+  @page { size: A4; margin: 14mm 16mm; }
+  :root { color-scheme: light; }
+  html { background: #fff; }
+  body {
+    margin: 0; color: #111; background: #fff;
+    font: 10pt/1.42 'Space Grotesk', Arial, Helvetica, sans-serif;
+  }
+  main { max-width: 176mm; margin: 0 auto; padding: 24px 16px; }
+  @media print { main { padding: 0; max-width: none; } }
+
+  h1 { font-size: 22pt; line-height: 1.1; margin: 0; }
+  .headline { font-size: 11.5pt; font-weight: 600; margin: 4px 0 6px; }
+  .contact { margin: 0; color: #333; }
+  h2 {
+    font-size: 11.5pt; text-transform: uppercase; letter-spacing: 0;
+    margin: 12px 0 5px; padding-bottom: 3px; border-bottom: 1px solid #999;
+  }
+  h3 { font-size: 10.5pt; margin: 0; }
+  p { margin: 0; }
+  a { color: inherit; }
+  ul { margin: 3px 0 0; padding-left: 16px; }
+  li + li { margin-top: 2px; }
+  .entry + .entry { margin-top: 8px; }
+  li, .row { break-inside: avoid; }
+  h2, .row { break-after: avoid; }
+  .row { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+  .row span { white-space: nowrap; }
+  .skills { list-style: none; padding: 0; }
+</style>

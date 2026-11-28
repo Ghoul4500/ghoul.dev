@@ -12,6 +12,8 @@ export interface Patch {
   subject: string;
   /** What it does and where it landed. */
   text: string;
+  /** Résumé one-liner. */
+  short?: string;
 }
 
 /** Merged in Linus' tree, newest first. */
@@ -25,16 +27,19 @@ export const patches: Patch[] = [
     sha: 'bcbdfe0', hash: 'bcbdfe03566a', area: 'asus-wmi',
     subject: 'platform/x86: asus-wmi: validate custom fan curves on enable',
     text: 'Validates custom fan curves on enable and rejects ones the firmware would not honour, so sysfs never shows a curve that is not applied. Merged for 7.4, backported to 7.3, 6.18, 6.12, 6.6 and 6.1 stable.',
+    short: 'Rejects custom fan curves the firmware would not honour. Merged for 7.4, backported to 7.3, 6.18, 6.12, 6.6 and 6.1 stable.',
   },
   {
     sha: '7bc99df', hash: '7bc99dff4d97', area: 'asus-armoury',
     subject: 'platform/x86: asus-armoury: gate PPT writes behind active fan curve',
     text: 'PPT power-limit writes now require an active custom fan curve on the 30 models whose firmware ignores them otherwise. Released in 7.3.',
+    short: 'Gates PPT power-limit writes behind an active fan curve on 30 models. Released in 7.3.',
   },
   {
     sha: 'd2d2e7c', hash: 'd2d2e7c8fb37b27301ee5c8343b2f7037efc6ea6', area: 'asus-armoury',
     subject: 'platform/x86: asus-armoury: fix mini-LED mode get/set on MODE2 devices',
     text: 'Fixed mini-LED mode get/set on 2024+ hardware. Reads decoded a constant instead of the device value, and writes skipped the firmware mode map. Merged in 7.1, backported to 7.0 stable.',
+    short: 'Fixes mini-LED mode get/set on 2024+ hardware. Merged in 7.1, backported to 7.0 stable.',
   },
 ];
 

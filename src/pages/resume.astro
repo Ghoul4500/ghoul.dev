@@ -1,48 +1,22 @@
 ---
-// Résumé — two fixed A4 sheets in the site theme. This page is the single source
-// for the downloadable PDF: `npm run resume` prints it with Playwright into
-// public/. Keep each sheet's content within one page (check the PDF after edits).
+// Two fixed A4 sheets, printed to the styled PDFs by `npm run resume`.
 import Base from '../layouts/Base.astro';
 import { getStats } from '../lib/stats';
-import { RESUME_HREF, RESUME_HREF_LIGHT } from '../lib/resume';
+import { RESUME_HREF, RESUME_HREF_LIGHT, RESUME_HREF_PLAIN } from '../lib/resume';
 import { patches, pending, LORE, commitUrl } from '../lib/patches';
-import { jobs, work } from '../lib/work';
+import { jobs, isCurrent } from '../lib/work';
+import {
+  NAME, HEADLINE, contact, summary, asusctl, ogc, skills, education, hasTags, awards,
+} from '../lib/cv';
 
-const { asusctlRelease } = await getStats();
+const { asusctlRelease, asusctlStars, kernelPatches } = await getStats();
+const profile = summary(kernelPatches);
+const oss = [asusctl(asusctlStars), ogc];
+const [first, last] = NAME.split(' ');
+
+const timeline = [jobs.filter(isCurrent), jobs.filter((j) => !isCurrent(j))];
 
 const generated = new Date().toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
-
-const contact = [
-  { label: 'yaseen@ghoul.dev', href: 'mailto:yaseen@ghoul.dev' },
-  { label: 'ghoul.dev', href: 'https://ghoul.dev' },
-  { label: 'github.com/Ghoul4500', href: 'https://github.com/Ghoul4500' },
-  { label: 'gitlab.com/Ghoul4500', href: 'https://gitlab.com/Ghoul4500' },
-];
-
-const skills = [
-  { k: 'languages', v: ['Rust', 'C', 'TypeScript', 'Go', 'PHP', 'Python'] },
-  { k: 'kernel & systems', v: ['Linux kernel', 'platform/x86', 'USB HID', 'WMI / ACPI', 'systemd'] },
-  { k: 'backend', v: ['Laravel', 'Actix', 'Django', 'Node', 'PostgreSQL'] },
-  { k: 'frontend', v: ['React', 'Svelte', 'Vue', 'Next.js', 'Astro'] },
-  { k: 'infra', v: ['Docker', 'Ansible', 'Nix', 'CI/CD', 'Linux servers'] },
-];
-
-const education = [
-  { when: '2022 — 2025', what: 'BSc (Hons) Computer Science', where: 'UWE Bristol · Villa College', note: 'First Class Honours' },
-  { when: '2021', what: 'Foundation in Engineering', where: 'Villa College' },
-  { when: '2019', what: 'O Levels', where: 'M.Atoll School', note: 'National Top 7' },
-];
-
-const awards = [
-  'College Medal, top of cohort',
-  "Dean's Award and Dean's List",
-  '2nd place, CyberExpo CTF',
-];
-
-const personal = [
-  { name: 'How I got started as an ASUS Linux dev', lbl: 'Writing · ghoul.dev/blog', href: 'https://ghoul.dev/blog/how-i-got-started-as-an-asus-linux-dev/',
-    text: 'From a bricked lightbar to asusctl and the Open Gaming Collective.' },
-];
 ---
 <Base
   title="Résumé — Ahmed Yaseen (Ghoul) · ghoul.dev"
@@ -51,114 +25,102 @@ const personal = [
   <div class="resume-bar">
     <div>
       <div class="rb-title mono">~/resume</div>
-      <div class="rb-sub">Two pages, A4. The PDF is rendered from this page.</div>
+      <div class="rb-sub">Two pages, A4. The PDFs are rendered from this page.</div>
     </div>
-    <a href={RESUME_HREF} data-light-href={RESUME_HREF_LIGHT} download="Ahmed-Yaseen-Resume.pdf" id="resume-dl" class="btn btn-primary">Download PDF <span aria-hidden="true">↓</span></a>
+    <div class="rb-actions">
+      <a href={RESUME_HREF_PLAIN} download="Ahmed-Yaseen-Resume.pdf" class="btn btn-ghost" title="Single column, plain text: reads cleanly in job portals and applicant tracking systems">Plain PDF for job portals</a>
+      <a href={RESUME_HREF} data-light-href={RESUME_HREF_LIGHT} download="Ahmed-Yaseen-Resume.pdf" id="resume-dl" class="btn btn-primary">Download PDF <span aria-hidden="true">↓</span></a>
+    </div>
   </div>
 
   <div class="sheets">
     <!-- ============================ SHEET 1 ============================ -->
     <article class="sheet">
       <header class="r-head">
-        <div class="r-top mono">
-          <span>GHOUL<b>.DEV</b> · MALÉ, MALDIVES · UTC+5</span>
-          <span>RÉSUMÉ</span>
-        </div>
         <div class="r-hero">
           <div>
-            <h1>Ahmed <span class="accent">Yaseen</span></h1>
-            <p class="r-role">Software engineer · Linux kernel contributor · asusctl maintainer</p>
+            <h1>{first} <span class="accent">{last}</span></h1>
+            <p class="r-role">{HEADLINE}</p>
           </div>
-      <div class="r-term mono">
-        <div class="bar"><i></i><i></i><i class="on"></i><span>git log --oneline · mainline</span></div>
-        <div class="body">
-          {patches.map((p) => (
-            <div><span class="sha">{p.sha}</span> {p.area}</div>
-          ))}
-        </div>
-      </div>
+          <div class="r-term mono">
+            <div class="bar"><i></i><i></i><i class="on"></i><span>git log --oneline · mainline</span></div>
+            <div class="body">
+              {patches.map((p) => (
+                <div><span class="sha">{p.sha}</span> {p.area}</div>
+              ))}
+            </div>
+          </div>
         </div>
         <div class="r-contact mono">
           {contact.map((c) => <a href={c.href}>{c.label}</a>)}
         </div>
+        <div class="r-top mono">
+          <span>GHOUL<b>.DEV</b> · MALÉ, MALDIVES · UTC+5</span>
+          <span>RÉSUMÉ</span>
+        </div>
       </header>
 
       <div class="r-main">
-          <section>
-            <h2><span class="idx mono">01 /</span> Profile</h2>
-            <p class="r-lead">
-              Maintainer of <strong>asusctl</strong>, community manager of the
-              <strong>Open Gaming Collective</strong>, active <strong>Linux kernel</strong> contributor. Lead
-              Platform Engineer at <strong>OXIQA</strong>, building government platforms for the Maldives.
-              Freelance through <strong>Zenryk</strong>.
-            </p>
-          </section>
+        <section>
+          <h2><span class="idx mono">01 /</span> Summary</h2>
+          <p class="r-lead">{profile.map((r) => (r.b ? <strong>{r.t}</strong> : r.t))}</p>
+        </section>
 
-          <section>
-            <h2><span class="idx mono">02 /</span> Open source</h2>
+        <section>
+          <h2><span class="idx mono">02 /</span> Open source</h2>
 
-            <div class="r-item">
-              <div class="r-item-head">
-                <h3>Linux kernel</h3>
-                <span class="flag mono">IN MAINLINE</span>
-                <span class="when mono">2026 — now</span>
-              </div>
-              <div class="r-sub mono">Contributor · platform/x86 · HID · C</div>
-              <ul class="r-patches">
-                {patches.map((p) => (
-                  <li>
-                    <a class="sha mono" href={commitUrl(p)}>{p.sha}</a>
-                    <span><b class="mono">{p.area}</b> {p.text}</span>
-                  </li>
-                ))}
-                {pending.map((p) => (
-                  <li class="pending">
-                    <a class="sha mono" href={LORE}>on list</a>
-                    <span><b class="mono">{p.area}</b> {p.text}</span>
-                  </li>
-                ))}
-              </ul>
+          <div class="r-item">
+            <div class="r-item-head">
+              <h3>Linux kernel</h3>
+              <span class="flag mono">IN MAINLINE</span>
+              <span class="when mono">2026 – Present</span>
             </div>
-
-            <div class="r-duo">
-            <div class="r-item">
-              <div class="r-item-head">
-                <h3>asusctl</h3>
-                <span class="when mono">maintainer</span>
-              </div>
-              <div class="r-sub mono">Rust · Open Gaming Collective · v{asusctlRelease}</div>
-              <p>
-                I maintain the daemon and handle its releases. Added Scar 18 2025 support, rebuilt the AniMe
-                Matrix image/GIF pipeline, fixed PPT power-tuning races.
-              </p>
-            </div>
-
-            <div class="r-item">
-              <div class="r-item-head">
-                <h3>Open Gaming Collective</h3>
-                <span class="when mono">community manager</span>
-              </div>
-              <div class="r-sub mono">Community · infrastructure · org admin</div>
-              <p>I handle the collective's infrastructure and its community.</p>
-            </div>
-            </div>
-          </section>
-
-          <section>
-            <h2><span class="idx mono">03 /</span> Experience</h2>
-            <div class="r-timeline">
-              {jobs.map((j) => (
-                <div class="r-job">
-                  <div class="when mono">{j.when}</div>
-                  <div class="body">
-                    <h3>{j.org}</h3>
-                    <div class="r-sub mono">{j.role}</div>
-                    <ul>{j.points.map((p) => <li>{p}</li>)}</ul>
-                  </div>
-                </div>
+            <div class="r-sub mono">Contributor · USB HID · platform/x86 drivers · C</div>
+            <ul class="r-patches">
+              {patches.map((p, i) => (
+                <li>
+                  <a class="sha mono" href={commitUrl(p)}>{p.sha}</a>
+                  <span><b class="mono">{p.area}</b> {i === 0 ? p.text : (p.short ?? p.text)}</span>
+                </li>
               ))}
-            </div>
-          </section>
+              {pending.map((p) => (
+                <li class="pending">
+                  <a class="sha mono" href={LORE}>on list</a>
+                  <span><b class="mono">{p.area}</b> {p.text}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div class="r-duo">
+            {oss.map((o) => (
+              <div class="r-item">
+                <div class="r-item-head">
+                  <h3>{o.name}</h3>
+                  <span class="when mono">{o.when}</span>
+                </div>
+                <div class="r-sub mono">{o.role} · {o.name === 'asusctl' ? `${o.sub} · v${asusctlRelease}` : o.sub}</div>
+                <p>{o.text}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <h2><span class="idx mono">03 /</span> Experience</h2>
+          <div class="r-timeline">
+            {timeline[0].map((j) => (
+              <div class="r-job">
+                <div class="when mono">{j.when}</div>
+                <div class="body">
+                  <h3>{j.org}</h3>
+                  <div class="r-sub mono">{j.role}</div>
+                  <ul>{j.points.map((p) => <li>{p}</li>)}</ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
 
       <footer class="r-foot mono"><span>ghoul.dev/resume</span><span>{generated}</span><span>1 / 2</span></footer>
@@ -166,69 +128,65 @@ const personal = [
 
     <!-- ============================ SHEET 2 ============================ -->
     <article class="sheet">
-      <div class="r-top mono r-top2">
+      <div class="r-top2 mono">
         <span>AHMED <b>YASEEN</b> · RÉSUMÉ</span>
         <span>yaseen@ghoul.dev</span>
       </div>
 
       <section>
-        <h2><span class="idx mono">04 /</span> Selected work</h2>
-        <div class="r-work">
-          {work.map((w) => (
-            <div class="r-card">
-              <div class="r-card-head"><h3>{w.name}</h3><span class="pill">{w.pill}</span></div>
-              <div class="sub">{w.sub}</div>
-              <div class="meta mono">{w.meta}</div>
-              <p>{w.text}</p>
-              <div class="tags">{w.tags.map((t) => <span class="tag">{t}</span>)}</div>
+        <h2><span class="idx mono">03 /</span> Experience <span class="aside mono">continued</span></h2>
+        <div class="r-timeline">
+          {timeline[1].map((j) => (
+            <div class="r-job">
+              <div class="when mono">{j.when}</div>
+              <div class="body">
+                <h3>{j.org}</h3>
+                <div class="r-sub mono">{j.role}</div>
+                <ul>{j.points.map((p) => <li>{p}</li>)}</ul>
+              </div>
             </div>
           ))}
         </div>
       </section>
 
-      <div class="r-tri">
-        <section>
-          <h2><span class="idx mono">05 /</span> Skills</h2>
+      <section>
+        <h2><span class="idx mono">04 /</span> Skills</h2>
+        <div class="r-skills">
           {skills.map((s) => (
             <div class="r-skill">
               <div class="k mono">{s.k}</div>
               <div class="v">{s.v.map((t) => <span class="tag">{t}</span>)}</div>
             </div>
           ))}
-        </section>
+        </div>
+      </section>
 
+      <div class="r-pair">
         <section>
-          <h2><span class="idx mono">06 /</span> Education</h2>
+          <h2><span class="idx mono">05 /</span> Education</h2>
           {education.map((e) => (
             <div class="r-edu">
               <div class="when mono">{e.when}</div>
               <h3>{e.what}</h3>
               <div class="where">{e.where}</div>
-              {e.note && <span class="award mono">{e.note}</span>}
+              {hasTags(e) && (
+                <div class="r-edu-tags">
+                  {e.result && <span class="result mono">{e.result}</span>}
+                  {e.topAward && <span class="top mono">{e.topAward}</span>}
+                  {e.awards?.map((a) => <span class="award mono">{a}</span>)}
+                </div>
+              )}
             </div>
           ))}
         </section>
 
         <section>
-          <h2><span class="idx mono">07 /</span> Awards</h2>
+          <h2><span class="idx mono">06 /</span> Awards</h2>
           <ul class="r-awards">
             {awards.map((a) => <li>{a}</li>)}
           </ul>
         </section>
       </div>
-
-      <section>
-        <h2><span class="idx mono">08 /</span> Writing <span class="aside mono">off hours: chess · gym · 3D modelling · games</span></h2>
-        <div class="r-personal">
-          {personal.map((p) => (
-            <a class="r-proj" href={p.href}>
-              <div class="lbl mono">{p.lbl}</div>
-              <h3>{p.name}</h3>
-              <p>{p.text}</p>
-            </a>
-          ))}
-        </div>
-      </section>
 
       <footer class="r-foot mono"><span>ghoul.dev/resume</span><span>{generated}</span><span>2 / 2</span></footer>
     </article>
@@ -269,6 +227,7 @@ const personal = [
   }
   .rb-title { color: var(--accent); font-size: 14px; }
   .rb-sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .rb-actions { display: flex; gap: 10px; flex-wrap: wrap; }
   .sheets { display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 0 12px 72px; }
 
   /* ---- the sheet: A4 at 96dpi ---- */
@@ -288,9 +247,10 @@ const personal = [
   .sheet section + section { margin-top: 16px; }
 
   /* ---- header ---- */
-  .r-top { display: flex; align-items: center; justify-content: space-between; font-size: 9.5px; letter-spacing: .12em; color: var(--muted); }
-  .r-top b { color: var(--accent); font-weight: 500; }
-  .r-hero { display: grid; grid-template-columns: 1fr 224px; gap: 26px; align-items: end; margin-top: 8px; }
+  .r-top, .r-top2 { display: flex; align-items: center; justify-content: space-between; font-size: 9.5px; letter-spacing: .12em; color: var(--muted); }
+  .r-top b, .r-top2 b { color: var(--accent); font-weight: 500; }
+  .r-top { position: absolute; top: 40px; left: 44px; right: 44px; }
+  .r-hero { display: grid; grid-template-columns: 1fr 224px; gap: 26px; align-items: end; margin-top: 22px; }
   .r-head h1 { font-size: 56px; line-height: 1; letter-spacing: -0.04em; margin-top: 4px; }
   .r-role { font-size: 14px; color: var(--muted); font-weight: 500; margin-top: 10px !important; }
   .r-contact { display: flex; flex-wrap: wrap; gap: 6px 8px; margin-top: 14px; font-size: 9.5px; }
@@ -306,12 +266,14 @@ const personal = [
   .sheet h3 { font-size: 12.5px; letter-spacing: -0.01em; }
 
   /* ---- columns ---- */
-  .r-main { margin-top: 18px; }
-  .r-main > section + section, .r-tri, .r-tri + section { margin-top: 16px; }
-  .r-duo { display: grid; grid-template-columns: 1.7fr 1fr; gap: 26px; margin-top: 13px; padding-top: 12px; border-top: 1px dashed var(--border); }
+  .r-main { margin-top: 14px; }
+  .r-main > section + section { margin-top: 13px; }
+  .r-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 13px; padding-top: 12px; border-top: 1px dashed var(--border); }
   .r-duo .r-item + .r-item { margin-top: 0; padding-top: 0; border-top: 0; }
-  .r-tri { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
-  .r-tri section + section { margin-top: 0; }
+  .r-pair { display: grid; grid-template-columns: 1.4fr 1fr; gap: 26px; margin-top: 16px; }
+  .r-pair section + section { margin-top: 0; }
+  .r-pair + section { margin-top: 16px; }
+  .r-skills { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 26px; }
   .r-lead { font-size: 11.5px; line-height: 1.6; color: var(--muted); text-wrap: pretty; }
   .r-lead strong { color: var(--fg); font-weight: 600; }
 
@@ -341,16 +303,19 @@ const personal = [
   .r-term .sha { color: var(--accent); }
   .r-term .dim { color: var(--muted); opacity: .75; }
 
-  .r-skill + .r-skill { margin-top: 7px; }
   .r-skill .k { font-size: 8.5px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 5px; }
   .r-skill .v { display: flex; flex-wrap: wrap; gap: 4px; }
   .sheet .tag { font-size: 8.5px; padding: 2px 6px; border-radius: 5px; }
 
-  .r-edu + .r-edu { margin-top: 8px; }
+  .r-edu + .r-edu { margin-top: 6px; }
   .r-edu .when { font-size: 8.5px; color: var(--accent); }
   .r-edu h3 { font-size: 11.5px; margin-top: 1px; }
   .r-edu .where { color: var(--muted); font-size: 10px; }
-  .r-edu .award { display: inline-block; margin-top: 4px; font-size: 8.5px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent); }
+  .r-edu-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+  .r-edu-tags > span { font-size: 8.5px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--accent); }
+  .r-edu .result { background: var(--accent); color: var(--ink); font-weight: 700; }
+  .r-edu .top { color: var(--accent); }
+  .r-edu .award { border-color: var(--border); color: var(--muted); }
 
   .r-awards { display: grid; gap: 5px; }
   .r-awards li { position: relative; padding-left: 13px; color: var(--muted); font-size: 10.5px; }
@@ -370,21 +335,6 @@ const personal = [
   .r-job li { position: relative; padding-left: 12px; color: var(--muted); text-wrap: pretty; }
   .r-job li::before { content: '–'; position: absolute; left: 0; color: var(--border); }
 
-  .r-work { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .r-card { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 11px 12px; display: flex; flex-direction: column; }
-  .r-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
-  .r-card h3 { font-size: 11.5px; line-height: 1.25; }
-  .sheet .pill { font-size: 7.5px; padding: 2px 6px; }
-  .r-card .sub { color: var(--fg); font-size: 9.5px; margin-top: 3px; opacity: .85; }
-  .r-card .meta { font-size: 8px; color: var(--accent); margin-top: 3px; }
-  .r-card p { color: var(--muted); font-size: 10px; line-height: 1.45; margin: 6px 0 8px !important; text-wrap: pretty; }
-  .r-card .tags { margin-top: auto; gap: 4px; }
-
-  .r-personal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .r-proj { display: block; border: 1px dashed var(--border); border-radius: 10px; padding: 10px 12px; }
-  .r-proj .lbl { font-size: 8px; color: var(--accent); }
-  .r-proj h3 { font-size: 11.5px; margin-top: 2px; }
-  .r-proj p { color: var(--muted); font-size: 10px; line-height: 1.45; margin-top: 3px !important; }
   .sheet h2 .aside { margin-left: auto; font-size: 8.5px; font-weight: 400; color: var(--muted); letter-spacing: 0; }
 
   /* ---- footer ---- */

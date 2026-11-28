@@ -8,6 +8,6 @@ import sitemap from '@astrojs/sitemap';
 export default defineConfig({
   site: 'https://ghoul.dev',
   output: 'static',
-  integrations: [sitemap()],
+  integrations: [sitemap({ filter: (page) => !page.includes('/resume/plain') })],
   devToolbar: { enabled: false },
 });

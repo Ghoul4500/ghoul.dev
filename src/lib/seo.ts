@@ -7,9 +7,10 @@ export const SITE = {
   email: 'yaseen@ghoul.dev',
 } as const;
 
-/** Site-relative paths of the résumé PDFs (dark, light), rendered from /resume by `npm run resume`. */
+/** Résumé PDFs, rendered by `npm run resume`. */
 export const RESUME_PDF = '/Ahmed-Yaseen-Resume.pdf';
 export const RESUME_PDF_LIGHT = '/Ahmed-Yaseen-Resume-light.pdf';
+export const RESUME_PDF_PLAIN = '/Ahmed-Yaseen-Resume-plain.pdf';
 
 export const DEFAULT_TITLE =
   'Ahmed Yaseen (Ghoul) · Linux Kernel Contributor in the Maldives · ghoul.dev';
@@ -35,16 +36,15 @@ export function personJsonLd(): object {
     homeLocation: { '@type': 'Place', address: { '@type': 'PostalAddress', addressCountry: 'MV' } },
     worksFor: [
       { '@type': 'Organization', name: 'OXIQA', url: 'https://oxiqa.com' },
-      { '@type': 'Organization', name: 'Zenryk', url: 'https://zenryk.com' },
       { '@type': 'Organization', name: 'Synetecs', url: 'https://synetecs.io' },
     ],
     memberOf: [
       { '@type': 'Organization', name: 'Open Gaming Collective', url: 'https://opengamingcollective.org' },
     ],
     knowsAbout: [
-      'Linux kernel', 'Linux kernel development', 'C', 'TypeScript', 'Rust', 'Python', 'PHP', 'Go',
+      'Linux kernel', 'Linux kernel development', 'Device drivers', 'USB HID', 'C', 'TypeScript', 'Rust', 'Python', 'PHP', 'Go',
       'Linux', 'systemd', 'platform/x86', 'Svelte', 'React', 'Astro',
-      'Laravel', 'Django', 'Actix', 'PostgreSQL', 'Docker', 'AI', 'NLP', 'Open source',
+      'Laravel', 'Next.js', 'Django', 'Axum', 'Tokio', 'gRPC', 'Leptos', 'Event sourcing', 'PostgreSQL', 'Docker', 'Ansible', 'Nix', 'OpenTofu', 'GitHub Actions', 'LLM APIs', 'MCP', 'TanStack', 'Tailwind CSS', 'MySQL', 'Redis', 'MongoDB', 'OpenTelemetry', 'Elasticsearch', 'Grafana', 'Metabase', 'Podman', 'AI', 'NLP', 'Open source',
     ],
     sameAs: [
       'https://github.com/Ghoul4500',

@@ -1,5 +1,4 @@
-// Render /resume to public/Ahmed-Yaseen-Resume.pdf (dark theme) and
-// public/Ahmed-Yaseen-Resume-light.pdf with Playwright's Chromium.
+// Render the résumé PDFs into public/ with Playwright's Chromium.
 // Run through `npm run resume` inside the nix dev shell (nix/), which provides the
 // browser (PLAYWRIGHT_BROWSERS_PATH); playwright-core is pinned to the same
 // version as nixpkgs' playwright-driver.
@@ -11,7 +10,11 @@ import { chromium } from 'playwright-core';
 
 const root = new URL('..', import.meta.url).pathname;
 const dist = join(root, 'dist');
-const themes = { dark: 'Ahmed-Yaseen-Resume.pdf', light: 'Ahmed-Yaseen-Resume-light.pdf' };
+const outputs = [
+  { path: '/resume/', theme: 'dark', name: 'Ahmed-Yaseen-Resume.pdf' },
+  { path: '/resume/', theme: 'light', name: 'Ahmed-Yaseen-Resume-light.pdf' },
+  { path: '/resume/plain/', name: 'Ahmed-Yaseen-Resume-plain.pdf' },
+];
 
 const types = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript',
@@ -38,11 +41,11 @@ const { port } = server.address();
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage();
-  await page.goto(`http://127.0.0.1:${port}/resume/`, { waitUntil: 'networkidle' });
-  await page.evaluate(() => document.fonts.ready);
   await page.emulateMedia({ media: 'print' });
-  for (const [theme, name] of Object.entries(themes)) {
-    await page.evaluate((t) => document.documentElement.setAttribute('data-theme', t), theme);
+  for (const { path, theme, name } of outputs) {
+    await page.goto(`http://127.0.0.1:${port}${path}`, { waitUntil: 'networkidle' });
+    if (theme) await page.evaluate((t) => document.documentElement.setAttribute('data-theme', t), theme);
+    await page.evaluate(() => document.fonts.ready);
     await page.pdf({ path: join(root, 'public', name), format: 'A4', printBackground: true, preferCSSPageSize: true });
   }
 } finally {
@@ -51,7 +54,7 @@ try {
 }
 
 // Keep the fresh build consistent with public/ without a second build.
-for (const name of Object.values(themes)) {
+for (const { name } of outputs) {
   await copyFile(join(root, 'public', name), join(dist, name));
   console.log(`wrote public/${name}`);
 }
