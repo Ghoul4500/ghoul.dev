@@ -1,4 +1,5 @@
-// Render /resume to public/Ahmed-Yaseen-Resume.pdf with Playwright's Chromium.
+// Render /resume to public/Ahmed-Yaseen-Resume.pdf (dark theme) and
+// public/Ahmed-Yaseen-Resume-light.pdf with Playwright's Chromium.
 // Run through `npm run resume` inside the nix dev shell (nix/), which provides the
 // browser (PLAYWRIGHT_BROWSERS_PATH); playwright-core is pinned to the same
 // version as nixpkgs' playwright-driver.
@@ -10,8 +11,7 @@ import { chromium } from 'playwright-core';
 
 const root = new URL('..', import.meta.url).pathname;
 const dist = join(root, 'dist');
-const name = 'Ahmed-Yaseen-Resume.pdf';
-const out = join(root, 'public', name);
+const themes = { dark: 'Ahmed-Yaseen-Resume.pdf', light: 'Ahmed-Yaseen-Resume-light.pdf' };
 
 const types = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript',
@@ -39,16 +39,19 @@ const browser = await chromium.launch();
 try {
   const page = await browser.newPage();
   await page.goto(`http://127.0.0.1:${port}/resume/`, { waitUntil: 'networkidle' });
-  // The PDF is always the dark theme, whatever the builder's saved preference.
-  await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
   await page.evaluate(() => document.fonts.ready);
   await page.emulateMedia({ media: 'print' });
-  await page.pdf({ path: out, format: 'A4', printBackground: true, preferCSSPageSize: true });
+  for (const [theme, name] of Object.entries(themes)) {
+    await page.evaluate((t) => document.documentElement.setAttribute('data-theme', t), theme);
+    await page.pdf({ path: join(root, 'public', name), format: 'A4', printBackground: true, preferCSSPageSize: true });
+  }
 } finally {
   await browser.close();
   server.close();
 }
 
 // Keep the fresh build consistent with public/ without a second build.
-await copyFile(out, join(dist, name));
-console.log(`wrote ${out}`);
+for (const name of Object.values(themes)) {
+  await copyFile(join(root, 'public', name), join(dist, name));
+  console.log(`wrote public/${name}`);
+}

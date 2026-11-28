@@ -4,7 +4,7 @@
 // public/. Keep each sheet's content within one page (check the PDF after edits).
 import Base from '../layouts/Base.astro';
 import { getStats } from '../lib/stats';
-import { RESUME_HREF } from '../lib/resume';
+import { RESUME_HREF, RESUME_HREF_LIGHT } from '../lib/resume';
 import { patches, pending, LORE, commitUrl } from '../lib/patches';
 import { jobs, work } from '../lib/work';
 
@@ -53,7 +53,7 @@ const personal = [
       <div class="rb-title mono">~/resume</div>
       <div class="rb-sub">Two pages, A4. The PDF is rendered from this page.</div>
     </div>
-    <a href={RESUME_HREF} download class="btn btn-primary">Download PDF <span aria-hidden="true">↓</span></a>
+    <a href={RESUME_HREF} data-light-href={RESUME_HREF_LIGHT} download="Ahmed-Yaseen-Resume.pdf" id="resume-dl" class="btn btn-primary">Download PDF <span aria-hidden="true">↓</span></a>
   </div>
 
   <div class="sheets">
@@ -243,6 +243,17 @@ const personal = [
       };
       fit();
       addEventListener('resize', fit);
+    })();
+
+    // Download the PDF in the theme the page is shown in (dark without JS).
+    (function () {
+      var dl = document.getElementById('resume-dl');
+      if (!dl) return;
+      var dark = dl.getAttribute('href');
+      dl.addEventListener('click', function () {
+        var light = document.documentElement.getAttribute('data-theme') === 'light';
+        dl.setAttribute('href', light ? dl.getAttribute('data-light-href') : dark);
+      });
     })();
   </script>
 </Base>
