@@ -65,7 +65,7 @@ const profile = plain(summary(kernelPatches));
       </div>
       {[asusctl(asusctlStars), ogc].map((o) => (
         <div class="entry">
-          <div class="row"><h3>{o.role}, {o.name}</h3><span>{o.when}</span></div>
+          <div class="row"><h3>{o.role}, {o.name}{'org' in o ? ` (${o.org})` : ''}</h3><span>{o.when}</span></div>
           <ul><li>{o.text}</li></ul>
         </div>
       ))}

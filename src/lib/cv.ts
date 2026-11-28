@@ -36,9 +36,10 @@ export const roughly = (n: number) => `${Math.floor(n / 50) * 50}+`;
 
 export const asusctl = (stars: number) => ({
   name: 'asusctl',
+  org: 'ASUS Linux',
   role: 'Maintainer',
   when: '2026 – Present',
-  sub: 'Rust · systemd · D-Bus',
+  sub: 'ASUS Linux · Rust · systemd · D-Bus',
   text:
     `The daemon that controls fan curves, power limits, keyboard lighting and the AniMe Matrix display on ASUS ROG laptops under Linux. ` +
     `${roughly(stars)} GitHub stars, preinstalled in Bazzite. I review contributions and handle the releases. ` +
